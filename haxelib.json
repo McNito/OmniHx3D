@@ -1,0 +1,13 @@
+{
+  "name": "OmniHx3D",
+  "url" : "https://github.com/exaphaser/OmniHx3D",
+  "license": "GPL-3.0",
+  "tags": ["game-engine", "3d", "game", "babylon", "BabylonHx"],
+  "description": "OmniHx3D is a modified version of BabylonHx",
+  "version": "1.2.0",
+  "releasenote": "Initial release, everything is working correctly.",
+  "contributors": ["0xFireball","vujadin"],
+  "dependencies": {
+    "lime": ""
+  }
+}
