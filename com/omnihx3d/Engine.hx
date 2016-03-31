@@ -15,7 +15,6 @@ import com.omnihx3d.mesh.VertexBuffer;
 import com.omnihx3d.math.Viewport;
 import com.omnihx3d.postprocess.PostProcess;
 import com.omnihx3d.tools.Tools;
-
 import com.omnihx3d.utils.GL;
 import com.omnihx3d.utils.typedarray.UInt8Array;
 import com.omnihx3d.utils.typedarray.Float32Array;
@@ -23,6 +22,13 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 import com.omnihx3d.utils.typedarray.Int16Array;
 import com.omnihx3d.utils.typedarray.ArrayBufferView;
 import com.omnihx3d.utils.Image;
+
+
+#if html5
+import com.omnihx3d.utils.js.PointerLock;
+#elseif (windows || mac || linux)
+import lime.ui.Mouse;
+#end
 
 import haxe.ds.Vector;
 
@@ -147,6 +153,11 @@ import nme.display.OpenGLView;
 	
 	public static var app:Dynamic;
 	
+	//Pointer lock (HTML5)
+	#if html5
+	var jspointerLock:PointerLock;
+	#end
+	
 	// quick and dirty solution to handle mouse/keyboard 
 	public static var mouseDown:Array<Dynamic> = [];
 	public static var mouseUp:Array<Dynamic> = [];
@@ -163,10 +174,9 @@ import nme.display.OpenGLView;
 	public var width:Int;
 	public var height:Int;
 	#end
-	
 		
 	public function new(canvas:Dynamic, antialias:Bool = false, ?options:Dynamic) {
-		trace("omnihx3d - Cross-Platform 3D Engine | " + Date.now().getFullYear() + " https://github.com/exaphaser/OmniHx3D");
+		trace("omnihx3d - Cross-Platform 3D Engine | (c) 2015-" + Date.now().getFullYear() + ", ExaPhaser Industries. Project site: http://exaphaser.github.io/OmniHx3D/");
 		
 		Engine.app = canvas;
 		this._renderingCanvas = canvas;
@@ -2011,4 +2021,30 @@ import nme.display.OpenGLView;
 		}
 	}
 	#end
+	public function setPointerLock()
+	{
+		#if html5
+		isPointerLock = true;
+		jspointerLock = new PointerLock();
+		jspointerLock.handleMoveRelative = function(x:Float, y:Float) {
+			for (f in mouseMoveRelative)
+			{
+				f(x,y);
+			}
+		};
+		jspointerLock.init();
+		#elseif (windows || mac || linux)
+		isPointerLock = true;
+		Mouse.hide();
+		Mouse.lock = true;
+		Engine.app.onMouseMoveRelative.add(function(x:Float, y:Float) {
+			for (f in mouseMoveRelative)
+			{
+				f(x,y);
+			}
+		});
+		#else
+		throw "Pointer lock is not supported on this platform.";
+		#end
+	}
 }

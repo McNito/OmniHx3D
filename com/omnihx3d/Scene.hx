@@ -90,6 +90,7 @@ import com.omnihx3d.tools.Tools;
 	public var onPointerDown:Dynamic;   // MouseEvent->PickingInfo->Void
 	public var _onPointerUp:Dynamic;	// MouseEvent->Void
 	public var onPointerUp:Dynamic;		// MouseEvent->PickingInfo->Void
+	public var _onMouseMoveRelative:Dynamic;		// MouseEvent->Void
 	public var cameraToUseForPointers:Camera = null; // Define this parameter if you are using multiple cameras and you want to specify which one should be used for pointer position
 	private var _pointerX:Int;
 	private var _pointerY:Int;
@@ -564,6 +565,10 @@ import com.omnihx3d.tools.Tools;
 			}
 		};
 		
+		this._onMouseMoveRelative = function(offsetX:Float, offsetY:Float) {
+			//Empty placeholder
+		};
+		
 		this._onKeyDown = function(keycode:Int) {
 			if (this.actionManager != null) {
 				this.actionManager.processTrigger(ActionManager.OnKeyDownTrigger, ActionEvent.CreateNewFromScene(this, keycode));
@@ -579,7 +584,7 @@ import com.omnihx3d.tools.Tools;
 		Engine.mouseDown.push(this._onPointerDown);
 		Engine.mouseUp.push(this._onPointerUp);
 		Engine.mouseMove.push(this._onPointerMove);
-			
+		Engine.mouseMoveRelative.push(this._onMouseMoveRelative);
 		Engine.keyDown.push(this._onKeyDown);
 		Engine.keyUp.push(this._onKeyUp);
 	}
@@ -588,7 +593,7 @@ import com.omnihx3d.tools.Tools;
 		Engine.mouseDown.remove(this._onPointerDown);
 		Engine.mouseUp.remove(this._onPointerUp);
 		Engine.mouseMove.remove(this._onPointerMove);
-				
+		Engine.mouseMoveRelative.remove(this._onMouseMoveRelative);
 		Engine.keyDown.remove(this._onKeyDown);
 		Engine.keyUp.remove(this._onKeyUp);
 	}
