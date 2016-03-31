@@ -1,6 +1,6 @@
 {
   "name": "OmniHx3D",
   "tagline": "A modified version of BabylonHx",
-  "body": "# OmniHx3D\r\nA modified version of BabylonHx\r\n",
+  "body": "# OmniHx3D\r\nA modified version of BabylonHx\r\n\r\n## Install\r\n`haxelib install OmniHx3D`\r\n",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }
