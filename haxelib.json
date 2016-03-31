@@ -4,8 +4,8 @@
   "license": "GPL",
   "tags": ["game-engine", "3d", "game", "babylon", "BabylonHx"],
   "description": "OmniHx3D is a modified version of BabylonHx",
-  "version": "1.2.0",
-  "releasenote": "Initial release, everything is working correctly.",
+  "version": "1.2.1",
+  "releasenote": "Pointer lock support both on HTML5 and Native targets! Provided through the Pointer Lock API on HTML5 and Lime on Native.",
   "contributors": ["0xFireball"],
   "dependencies": {
     "lime": ""
