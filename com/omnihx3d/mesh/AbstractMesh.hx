@@ -16,8 +16,9 @@ import com.omnihx3d.math.Matrix;
 import com.omnihx3d.math.Plane;
 import com.omnihx3d.math.Axis;
 import com.omnihx3d.math.Quaternion;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 import com.omnihx3d.math.Space;
+import com.omnihx3d.math.Tools;
 import com.omnihx3d.math.Vector3;
 import com.omnihx3d.math.Color3;
 import com.omnihx3d.math.Color4;
@@ -26,6 +27,8 @@ import com.omnihx3d.Node.NodeCache;
 import com.omnihx3d.physics.PhysicsEngine;
 import com.omnihx3d.physics.PhysicsBodyCreationOptions;
 import com.omnihx3d.rendering.EdgesRenderer;
+import com.omnihx3d.math.Tmp;
+import com.omnihx3d.utils.typedarray.Float32Array;
 
 /**
  * ...
@@ -45,10 +48,14 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	// Properties
 	public var definedFacingForward:Bool = true; // orientation for POV movement & rotation
 	public var position:Vector3 = new Vector3(0, 0, 0);
-	public var rotation:Vector3 = new Vector3(0, 0, 0);
-	public var rotationQuaternion:Quaternion;
-	public var scaling:Vector3 = new Vector3(1, 1, 1);
+	public var rotation(get, set):Vector3;
+	public var rotationQuaternion(get, set):Quaternion;
+	public var scaling(get, set):Vector3;
 	public var billboardMode:Int = AbstractMesh.BILLBOARDMODE_NONE;
+	
+	private var _rotation:Vector3 = new Vector3(0, 0, 0);
+	private var _scaling:Vector3 = new Vector3(1, 1, 1);
+	private var _rotationQuaternion:Quaternion;
 	
 	private var _visibility:Float = 1.0;
 	public var visibility(get, set):Float;
@@ -78,16 +85,6 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	public var showSubMeshesBoundingBox:Bool = false;
 	public var onDispose:Void->Void = null;	
 	public var isBlocker:Bool = false;	
-	
-	private var _skeleton:Skeleton;
-	public var skeleton(get, set):Skeleton;
-	private function get_skeleton():Skeleton {
-		return _skeleton;
-	}
-	private function set_skeleton(val:Skeleton):Skeleton {
-		_skeleton = val;
-		return val;
-	}
 	
 	public var renderingGroupId:Int = 0;	
 	
@@ -122,6 +119,7 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	public var useVertexColors:Bool = true;
 	public var applyFog:Bool = true;
 	public var computeBonesUsingShaders:Bool = true;
+	public var scalingDeterminant:Float = 1;
 	public var numBoneInfluencers:Int = 4;
 
 	public var useOctreeForRenderingSelection:Bool = true;
@@ -137,6 +135,7 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	public var _physicsMass:Float = 0;
 	public var _physicsFriction:Float = 0;
 	public var _physicRestitution:Float = 0;
+	public var onPhysicsCollide:AbstractMesh->Dynamic->Void; 
 
 	// Collisions
 	private var _checkCollisions:Bool = false;
@@ -147,6 +146,7 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	private var _diffPositionForCollisions:Vector3 = new Vector3(0, 0, 0);
 	private var _newPositionForCollisions:Vector3 = new Vector3(0, 0, 0);
 	public var onCollide:AbstractMesh->Void;
+	public var onCollisionPositionChange:Vector3->Void;
 	
 	// Attach to bone
     private var _meshToBoneReferal:AbstractMesh;
@@ -205,9 +205,39 @@ import com.omnihx3d.rendering.EdgesRenderer;
 	
 	private var _isWorldMatrixFrozen:Bool = false;
 	
+	public var _unIndexed:Bool = false;
+	
+	public var _poseMatrix:Matrix;
+	
 	// Loading properties
 	public var _waitingActions:Dynamic;
 	public var _waitingFreezeWorldMatrix:Bool;
+	
+	// Skeleton
+	private var _skeleton:Skeleton;
+	public var skeleton(get, set):Skeleton;
+	public var _bonesTransformMatrices: #if (js || purejs || web || html5) Float32Array #else Array<Float> #end ;
+	
+	private function get_skeleton():Skeleton {
+		return this._skeleton;
+	}
+	private function set_skeleton(value:Skeleton):Skeleton {
+		if (this._skeleton != null && this._skeleton.needInitialSkinMatrix) {
+			this._skeleton._unregisterMeshWithPoseMatrix(this);
+		}
+		
+		if (value != null && value.needInitialSkinMatrix) {
+			value._registerMeshWithPoseMatrix(this);
+		}
+		
+		this._skeleton = value;
+		
+		if (this._skeleton == null) {
+			this._bonesTransformMatrices = null;
+		}
+		
+		return value;
+	}
 	
 
 	public function new(name:String, scene:Scene) {
@@ -229,8 +259,52 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		untyped __js__("Object.defineProperty(this, 'isWorldMatrixFrozen', { get: this.get_isWorldMatrixFrozen })");
 		#end
 	}
+	
+	/**
+	 * Getting the rotation object. 
+	 * If rotation quaternion is set, this vector will (almost always) be the Zero vector!
+	 */
+	private function get_rotation():Vector3 {
+		return this._rotation;
+	}
+	private function set_rotation(newRotation:Vector3):Vector3 {
+		return this._rotation = newRotation;
+	}
+
+	private function get_scaling():Vector3 {
+		return this._scaling;
+	}
+	private function set_scaling(newScaling:Vector3):Vector3 {
+		this._scaling = newScaling;
+		/*if (this.physicsImpostor != null) {
+			this.physicsImpostor.forceUpdate();
+		}*/
+		
+		return newScaling;
+	}
+
+	private function get_rotationQuaternion():Quaternion {
+		return this._rotationQuaternion;
+	} 
+	private function set_rotationQuaternion(?quaternion:Quaternion):Quaternion {
+        this._rotationQuaternion = quaternion;
+        //reset the rotation vector. 
+		if (quaternion != null && this.rotation.length() > 0) {
+			this.rotation.copyFromFloats(0, 0, 0);
+		}
+		
+		return quaternion;
+	}
 
 	// Methods
+	public function updatePoseMatrix(matrix:Matrix) {
+		this._poseMatrix.copyFrom(matrix);
+	}
+
+	public function getPoseMatrix():Matrix {
+		return this._poseMatrix;
+	}
+	
 	public function disableEdgesRendering() {
         if (this._edgesRenderer != null) {
             this._edgesRenderer.dispose();
@@ -281,10 +355,10 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		return this._boundingInfo;
 	}
 	
-	public function _preActivate() {
-		
-	}
-
+	public function _preActivate() { }
+	
+	public function _preActivateForIntermediateRendering(renderId:Int) { }
+	
 	public function _activate(renderId:Int) {
 		this._renderId = renderId;
 	}
@@ -351,7 +425,7 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		}
 	}
 
-	public function translate(axis:Vector3, distance:Float, space:Space) {
+	public function translate(axis:Vector3, distance:Float, ?space:Space) {
 		var displacementVector = axis.scale(distance);
 		
 		if (space == null || space == Space.LOCAL) {
@@ -491,22 +565,21 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		if (!this._cache.position.equals(this.position)) {
 			return false;
 		}
-			
+		
+		if (!this._cache.rotation.equals(this.rotation)) {
+			return false;
+		}
+		
 		if (this.rotationQuaternion != null) {
 			if (!this._cache.rotationQuaternion.equals(this.rotationQuaternion)) {
 				return false;
 			}
 		} 
-		else {
-			if (!this._cache.rotation.equals(this.rotation)) {
-				return false;
-			}
-		}
 		
 		if (!this._cache.scaling.equals(this.scaling)) {
 			return false;
 		}
-			
+		
 		return true;
 	}
 
@@ -542,19 +615,20 @@ import com.omnihx3d.rendering.EdgesRenderer;
 			return;
 		}
 		
-		for (subMesh in this.subMeshes) {			
-			subMesh.updateBoundingInfo(matrix);
+		for (subMesh in this.subMeshes) {	
+			if (!subMesh.IsGlobal) {
+				subMesh.updateBoundingInfo(matrix);
+			}
 		}
 	}
 
-	static var cameraWorldMatrix:Matrix;
-	static var cameraGlobalPosition:Vector3 = new Vector3();
 	public function computeWorldMatrix(force:Bool = false):Matrix {
 		if (this._isWorldMatrixFrozen) {
-            return this._worldMatrix;
-        }
+			return this._worldMatrix;
+		}
 		
 		if (!force && (this._currentRenderId == this.getScene().getRenderId() || this.isSynchronized(true))) {
+			this._currentRenderId = this.getScene().getRenderId();
 			return this._worldMatrix;
 		}
 		
@@ -566,37 +640,37 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		this._isDirty = false;
 		
 		// Scaling
-		Matrix.ScalingToRef(this.scaling.x, this.scaling.y, this.scaling.z, this._localScaling);
+		Matrix.ScalingToRef(this.scaling.x * this.scalingDeterminant, this.scaling.y * this.scalingDeterminant, this.scaling.z * this.scalingDeterminant, Tmp.matrix[1]);
 		
 		// Rotation
 		if (this.rotationQuaternion != null) {
-			this.rotationQuaternion.toRotationMatrix(this._localRotation);
+			this.rotationQuaternion.toRotationMatrix(Tmp.matrix[0]);
 			this._cache.rotationQuaternion.copyFrom(this.rotationQuaternion);
 		} 
 		else {
-			Matrix.RotationYawPitchRollToRef(this.rotation.y, this.rotation.x, this.rotation.z, this._localRotation);
+			Matrix.RotationYawPitchRollToRef(this.rotation.y, this.rotation.x, this.rotation.z, Tmp.matrix[0]);
 			this._cache.rotation.copyFrom(this.rotation);
 		}
 		
 		// Translation
 		if (this.infiniteDistance && this.parent == null) {
 			var camera = this.getScene().activeCamera;
-			if(camera != null) {
-				cameraWorldMatrix = camera.getWorldMatrix();
+			if (camera != null) {
+				var cameraWorldMatrix = camera.getWorldMatrix();
 				
-				cameraGlobalPosition.copyFromFloats(cameraWorldMatrix.m[12], cameraWorldMatrix.m[13], cameraWorldMatrix.m[14]);
+				var cameraGlobalPosition = new Vector3(cameraWorldMatrix.m[12], cameraWorldMatrix.m[13], cameraWorldMatrix.m[14]);
 				
 				Matrix.TranslationToRef(this.position.x + cameraGlobalPosition.x, this.position.y + cameraGlobalPosition.y,
-												this.position.z + cameraGlobalPosition.z, this._localTranslation);
+					this.position.z + cameraGlobalPosition.z, Tmp.matrix[2]);
 			}
 		} 
 		else {
-			Matrix.TranslationToRef(this.position.x, this.position.y, this.position.z, this._localTranslation);
+			Matrix.TranslationToRef(this.position.x, this.position.y, this.position.z, Tmp.matrix[2]);
 		}
 		
 		// Composing transformations
-		this._pivotMatrix.multiplyToRef(this._localScaling, this._localPivotScaling);
-		this._localPivotScaling.multiplyToRef(this._localRotation, this._localPivotScalingRotation);
+		this._pivotMatrix.multiplyToRef(Tmp.matrix[1], Tmp.matrix[4]);
+		Tmp.matrix[4].multiplyToRef(Tmp.matrix[0], Tmp.matrix[5]);
 		
 		// Billboarding
 		if (this.billboardMode != AbstractMesh.BILLBOARDMODE_NONE && this.getScene().activeCamera != null) {
@@ -605,15 +679,12 @@ import com.omnihx3d.rendering.EdgesRenderer;
 			
 			if (this.parent != null && Reflect.hasField(this.parent, "position")) {
 				localPosition.addInPlace(untyped this.parent.position);
-				Matrix.TranslationToRef(localPosition.x, localPosition.y, localPosition.z, this._localTranslation);
+				Matrix.TranslationToRef(localPosition.x, localPosition.y, localPosition.z, Tmp.matrix[2]);
 			}
 			
 			if ((this.billboardMode & AbstractMesh.BILLBOARDMODE_ALL) != AbstractMesh.BILLBOARDMODE_ALL) {
-				zero = this.getScene().activeCamera.position;
-			} 
-			else {
 				if (this.billboardMode & AbstractMesh.BILLBOARDMODE_X != 0) {
-					zero.x = localPosition.x + Engine.Epsilon;
+					zero.x = localPosition.x + Tools.Epsilon;
 				}
 				if (this.billboardMode & AbstractMesh.BILLBOARDMODE_Y != 0) {
 					zero.y = localPosition.y + 0.001;
@@ -623,31 +694,27 @@ import com.omnihx3d.rendering.EdgesRenderer;
 				}
 			}
 			
-			Matrix.LookAtLHToRef(localPosition, zero, Vector3.Up(), this._localBillboard);
-			this._localBillboard.m[12] = 0;
-			this._localBillboard.m[13] = 0;
-			this._localBillboard.m[14] = 0;
+			Matrix.LookAtLHToRef(localPosition, zero, Vector3.Up(), Tmp.matrix[3]);
+			Tmp.matrix[3].m[12] = 0;
+			Tmp.matrix[3].m[13] = 0;
+			Tmp.matrix[3].m[14] = 0;
 			
-			this._localBillboard.invert();
+			Tmp.matrix[3].invert();
 			
-			this._localPivotScalingRotation.multiplyToRef(this._localBillboard, this._localWorld);
-			this._rotateYByPI.multiplyToRef(this._localWorld, this._localPivotScalingRotation);
+			Tmp.matrix[5].multiplyToRef(Tmp.matrix[3], this._localWorld);
+			this._rotateYByPI.multiplyToRef(this._localWorld, Tmp.matrix[5]);
 		}
 		
 		// Local world
-		this._localPivotScalingRotation.multiplyToRef(this._localTranslation, this._localWorld);
+		Tmp.matrix[5].multiplyToRef(Tmp.matrix[2], this._localWorld);
 		
 		// Parent
-		if (this.parent != null && this.parent.getWorldMatrix() != null && this.billboardMode == AbstractMesh.BILLBOARDMODE_NONE) {
+		if (this.parent != null && this.billboardMode == AbstractMesh.BILLBOARDMODE_NONE) {
 			this._markSyncedWithParent();
 			
 			if (this._meshToBoneReferal != null) {
-				if (this._localMeshReferalTransform == null) {
-					this._localMeshReferalTransform = Matrix.Zero();
-				}
-				
-				this._localWorld.multiplyToRef(this.parent.getWorldMatrix(), this._localMeshReferalTransform);
-				this._localMeshReferalTransform.multiplyToRef(this._meshToBoneReferal.getWorldMatrix(), this._worldMatrix);
+				this._localWorld.multiplyToRef(this.parent.getWorldMatrix(), Tmp.matrix[6]);
+				Tmp.matrix[6].multiplyToRef(this._meshToBoneReferal.getWorldMatrix(), this._worldMatrix);
 			} 
 			else {
 				this._localWorld.multiplyToRef(this.parent.getWorldMatrix(), this._worldMatrix);
@@ -667,6 +734,10 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		for (callbackIndex in this._onAfterWorldMatrixUpdate) {
 			callbackIndex(this);
         }
+		
+		if (this._poseMatrix == null) {
+			this._poseMatrix = Matrix.Invert(this._worldMatrix);
+		}
 		
 		return this._worldMatrix;
 	}
@@ -1072,14 +1143,14 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		}
 	}
 
-	public function dispose(doNotRecurse:Bool = false) {
+	override public function dispose(doNotRecurse:Bool = false) {
+		// Animations
+        this.getScene().stopAnimation(this);
+		
 		// Physics
 		if (this.getPhysicsImpostor() != PhysicsEngine.NoImpostor) {
 			this.setPhysicsState(PhysicsEngine.NoImpostor);
 		}
-		
-		// Animations
-        this.getScene().stopAnimation(this);
 		
 		// Intersections in progress
 		for (index in 0...this._intersectionsInProgress.length) {
@@ -1089,6 +1160,29 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		}
 		
 		this._intersectionsInProgress = [];
+		
+		// Lights
+		var lights = this.getScene().lights;
+		
+		for (light in lights) {
+			var meshIndex = light.includedOnlyMeshes.indexOf(this);
+			
+			if (meshIndex != -1) {
+				light.includedOnlyMeshes.splice(meshIndex, 1);
+			}
+			
+			meshIndex = light.excludedMeshes.indexOf(this);
+			
+			if (meshIndex != -1) {
+				light.excludedMeshes.splice(meshIndex, 1);
+			}
+		}
+		
+		// Edges
+		if (this._edgesRenderer != null) {
+			this._edgesRenderer.dispose();
+			this._edgesRenderer = null;
+		}
 		
 		// SubMeshes
 		this.releaseSubMeshes();
@@ -1132,6 +1226,8 @@ import com.omnihx3d.rendering.EdgesRenderer;
 		if (this.onDispose != null) {
 			this.onDispose();
 		}
+		
+		super.dispose();
 	}
 	
 }

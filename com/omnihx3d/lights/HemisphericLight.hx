@@ -50,4 +50,13 @@ import com.omnihx3d.math.Vector3;
 		return this._worldMatrix;
 	}
 	
+	override public function serialize():Dynamic {
+		var serializationObject = super.serialize();
+		serializationObject.type = 3;
+		serializationObject.direction = this.direction.asArray();
+		serializationObject.groundColor = this.groundColor.asArray();
+		
+		return serializationObject;
+	}
+	
 }

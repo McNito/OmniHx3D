@@ -9,7 +9,7 @@ import com.omnihx3d.cameras.Camera;
 
 @:expose('BABYLON.DisplayPassPostProcess') class DisplayPassPostProcess extends PostProcess {
 	
-	public function new(name:String, ratio:Float, camera:Camera, ?samplingMode:Int, ?engine:Engine, reusable:Bool = false/*?reusable:Bool*/) {
+	public function new(name:String, ratio:Float, camera:Camera, ?samplingMode:Int, ?engine:Engine, reusable:Bool = false) {
 		super(name, "displayPass", ["passSampler"], ["passSampler"], ratio, camera, samplingMode, engine, reusable);
 	}
 	

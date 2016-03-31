@@ -106,7 +106,7 @@ import com.omnihx3d.animations.IAnimatable;
 	
 	override public function _activate(renderId:Int) {
 		if (this._currentLOD != null) {
-			this.sourceMesh._registerInstanceForRenderId(this, renderId);
+			this._currentLOD._registerInstanceForRenderId(this, renderId);
 		}
 	}
 	

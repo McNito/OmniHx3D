@@ -35,7 +35,7 @@ import haxe.Timer;
 	public function new(mesh:Mesh) {
 		this.aggressiveness = 7;
 		this.decimationIterations = 100;
-		this.boundingBoxEpsilon = Engine.Epsilon;
+		this.boundingBoxEpsilon = com.omnihx3d.math.Tools.Epsilon;
 	}
 
 	public function simplify(settings:ISimplificationSettings, successCallback:Mesh->Void, ?errorCallback:Void->Void) {
@@ -405,6 +405,7 @@ import haxe.Timer;
 		this._reconstructedMesh.material = this._mesh.material;
 		this._reconstructedMesh.parent = this._mesh.parent;
 		this._reconstructedMesh.isVisible = false;
+		this._reconstructedMesh.renderingGroupId = this._mesh.renderingGroupId;
 	}
 
 	private function isFlipped(vertex1:DecimationVertex, vertex2:DecimationVertex, point:Vector3, deletedArray:Array<Bool>, borderFactor:Float, delTr:Array<DecimationTriangle>):Bool {

@@ -1,5 +1,7 @@
 package com.omnihx3d.mesh.primitives;
 
+import com.omnihx3d.tools.Tags;
+
 /**
  * ...
  * @author Krtolica Vujadin
@@ -28,5 +30,18 @@ package com.omnihx3d.mesh.primitives;
 	override public function copy(id:String):Geometry {
 		return new Ground(id, this.getScene(), this.width, this.height, this.subdivisions, this.canBeRegenerated(), null);
 	}
+	
+	public static function Parse(parsedGround:Dynamic, scene:Scene):Ground {
+        if (Geometry.Parse(parsedGround, scene) == null) {
+            return null; // null since geometry could be something else than a ground...
+        }
+		
+        var ground = new Ground(parsedGround.id, scene, parsedGround.width, parsedGround.height, parsedGround.subdivisions, parsedGround.canBeRegenerated, null);
+        Tags.AddTagsTo(ground, parsedGround.tags);
+		
+        scene.pushGeometry(ground, true);
+		
+        return ground;
+    }
 	
 }

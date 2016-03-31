@@ -23,12 +23,12 @@ package com.omnihx3d.mesh.primitives;
 		this.zmax = zmax;
 		this.subdivisions = subdivisions;
 		this.precision = precision;
-
+		
 		super(id, scene, this._regenerateVertexData(), canBeRegenerated, mesh);
 	}
 
 	override public function _regenerateVertexData():VertexData {
-		return VertexData.CreateTiledGround(this.xmin, this.zmin, this.xmax, this.zmax, this.subdivisions, this.precision);
+		return VertexData.CreateTiledGround({xmin:this.xmin, zmin:this.zmin, xmax:this.xmax, zmax:this.zmax, subdivisions:this.subdivisions, precision:this.precision});
 	}
 
 	override public function copy(id:String):Geometry {

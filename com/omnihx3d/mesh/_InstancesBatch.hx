@@ -12,10 +12,6 @@ package com.omnihx3d.mesh;
 	public var renderSelf:Array<Bool> = [];
 	
 	
-	public function new() {
-		mustReturn = false;
-		visibleInstances = [];
-		renderSelf = [];
-	}
+	public function new() {	}
 	
 }

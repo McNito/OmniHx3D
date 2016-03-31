@@ -1,7 +1,6 @@
 package com.omnihx3d.math;
 
 import com.omnihx3d.utils.typedarray.Float32Array;
-import com.omnihx3d.tools.Tools;
 
 /**
 * ...
@@ -17,7 +16,7 @@ import com.omnihx3d.tools.Tools;
 	public var w:Float;
 	
 
-	public function new(x:Float = 0, y:Float = 0, z:Float = 0, w:Float = 0) { 
+	inline public function new(x:Float = 0, y:Float = 0, z:Float = 0, w:Float = 0) { 
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -141,7 +140,7 @@ import com.omnihx3d.tools.Tools;
 		return (otherVector != null && this.x == otherVector.x && this.y == otherVector.y && this.z == otherVector.z && this.w == otherVector.w);
 	}
 
-	inline public function equalsWithEpsilon(otherVector:Vector4, epsilon:Float = Engine.Epsilon):Bool {
+	inline public function equalsWithEpsilon(otherVector:Vector4, epsilon:Float = Tools.Epsilon):Bool {
 		return otherVector != null  
 		&& Tools.WithinEpsilon(this.x, otherVector.x, epsilon) 
 		&& Tools.WithinEpsilon(this.y, otherVector.y, epsilon) 

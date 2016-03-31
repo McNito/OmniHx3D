@@ -2,6 +2,7 @@ package com.omnihx3d.mesh;
 
 import com.omnihx3d.animations.IAnimatable;
 import com.omnihx3d.animations.Animatable;
+import com.omnihx3d.animations.Animation;
 import com.omnihx3d.culling.BoundingSphere;
 import com.omnihx3d.Engine;
 import com.omnihx3d.materials.Effect;
@@ -42,7 +43,13 @@ import com.omnihx3d.cameras.Camera;
 import com.omnihx3d.culling.BoundingInfo;
 import com.omnihx3d.particles.ParticleSystem;
 import com.omnihx3d.tools.AsyncLoop;
+import com.omnihx3d.tools.Observable;
+import com.omnihx3d.tools.Observer;
+import com.omnihx3d.tools.EventState;
 import com.omnihx3d.tools.Tools;
+import com.omnihx3d.tools.Tags;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.physics.PhysicsBodyCreationOptions;
 import com.omnihx3d.materials.Material;
 import com.omnihx3d.materials.textures.Texture;
 import com.omnihx3d.bones.Skeleton;
@@ -73,8 +80,40 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
     public static inline var CAP_END:Int = 2;
     public static inline var CAP_ALL:Int = 3;
 	
+	// Events 
+
+	/**
+	 * An event triggered before rendering the mesh
+	 * @type {BABYLON.Observable}
+	 */
+	public var onBeforeRenderObservable:Observable<Mesh> = new Observable<Mesh>();
+
+	/**
+	* An event triggered after rendering the mesh
+	* @type {BABYLON.Observable}
+	*/
+	public var onAfterRenderObservable:Observable<Mesh> = new Observable<Mesh>();
+
+	/**
+	* An event triggered before drawing the mesh
+	* @type {BABYLON.Observable}
+	*/
+	public var onBeforeDrawObservable:Observable<Mesh> = new Observable<Mesh>();
+
+	public var onBeforeDraw(never, set):Mesh->Null<EventState>->Void;
+	private var _onBeforeDrawObserver:Observer<Mesh>;
+	private function set_onBeforeDraw(callback:Mesh->Null<EventState>->Void):Mesh->Null<EventState>->Void {
+		if (this._onBeforeDrawObserver != null) {
+			this.onBeforeDrawObservable.remove(this._onBeforeDrawObserver);
+		}
+		
+		this._onBeforeDrawObserver = this.onBeforeDrawObservable.add(callback);
+		
+		return callback;
+	}
+	
 	// Members
-	public var delayLoadState = Engine.DELAYLOADSTATE_NONE;
+	public var delayLoadState:Int = Engine.DELAYLOADSTATE_NONE;
 	public var instances:Array<InstancedMesh> = [];
 	public var delayLoadingFile:String;
 	public var _binaryInfo:Dynamic;
@@ -82,9 +121,9 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	public var onLODLevelSelection:Float->Mesh->Mesh->Void;
 
 	// Private
-	public var _geometry:Geometry;
-	private var _onBeforeRenderCallbacks:Array<AbstractMesh->Void> = [];
-	private var _onAfterRenderCallbacks:Array<AbstractMesh->Void> = [];
+	@:allow(com.omnihx3d.mesh.Geometry) 
+	private var _geometry:Geometry;
+	
 	public var _delayInfo:Array<String>; //ANY
 	public var _delayLoadingFunction:Dynamic->Mesh->Void;
 	public var _visibleInstances:_VisibleInstances;
@@ -136,7 +175,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	public function new(name:String, scene:Scene, parent:Node = null, ?source:Mesh, doNotCloneChildren:Bool = false) {
 		super(name, scene);
 		
-		if (source != null){
+		if (source != null) {
 			// Geometry
 			if (source._geometry != null) {
 				source._geometry.applyToMesh(this);
@@ -147,11 +186,9 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			
 			this.id = name + "." + source.id;
 			
-			if (source != null) {
-				// Material
-                this.material = source.material;
-			}
-						
+			// Material
+			this.material = source.material;
+			
 			if (!doNotCloneChildren) {
 				// Children
 				for (index in 0...scene.meshes.length) {
@@ -181,71 +218,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		}
 	}
 	
-	static private function _deepCopy(source:Mesh, dest:Mesh) {
-		dest.__smartArrayFlags = source.__smartArrayFlags.copy();
-		dest._LODLevels = source._LODLevels.copy();
-		dest._absolutePosition = source._absolutePosition.clone();
-		dest._batchCache = source._batchCache;
-		dest._boundingInfo = source._boundingInfo;
-		dest._cache = source._cache;
-		dest._checkCollisions = source._checkCollisions;
-		dest._childrenFlag = source._childrenFlag;
-		dest._collider = source._collider;
-		dest.instances = source.instances.copy();
-		dest._collisionsScalingMatrix = source._collisionsScalingMatrix.clone();
-		dest._collisionsTransformMatrix = source._collisionsTransformMatrix.clone();
-		dest._diffPositionForCollisions = source._diffPositionForCollisions.clone();
-		dest._geometry = source._geometry;
-		dest._instancesBufferSize = source._instancesBufferSize;
-		dest._intersectionsInProgress = source._intersectionsInProgress.copy();
-		dest._isBlocked	= source._isBlocked;
-		dest._isDirty = source._isDirty;
-		dest._isDisposed = source._isDisposed;
-		dest._isEnabled = source._isEnabled;
-		dest._isPickable = source._isPickable;
-		dest._isReady = source._isReady;
-		dest._localBillboard = source._localBillboard.clone();
-		dest._localPivotScaling = source._localPivotScaling.clone();
-		dest._localRotation = source._localRotation.clone();
-		dest._localScaling = source._localScaling.clone();
-		dest._localTranslation = source._localTranslation.clone();
-		dest._localWorld = source._localWorld;
-		dest._masterMesh = source._masterMesh;		// ??
-		//dest._material = source._material;
-		dest._newPositionForCollisions = source._newPositionForCollisions.clone();
-		dest._oldPositionForCollisions = source._oldPositionForCollisions.clone();
-		dest._onAfterRenderCallbacks = source._onAfterRenderCallbacks;
-		dest._onAfterWorldMatrixUpdate = source._onAfterWorldMatrixUpdate;
-		dest._onBeforeRenderCallbacks = source._onBeforeRenderCallbacks;
-		dest._parentRenderId = source._parentRenderId;
-		dest._physicImpostor = source._physicImpostor;
-		dest._physicRestitution = source._physicRestitution;
-		dest._physicsFriction = source._physicsFriction;
-		dest._physicsMass = source._physicsMass;
-		dest._pivotMatrix = source._pivotMatrix.clone();
-		if (source._positions != null) {
-			dest._positions = source._positions.copy();
-		}
-		dest._preActivateId = source._preActivateId;
-		dest._receiveShadows = source._receiveShadows;
-		dest._renderId = source._renderId;
-		dest._renderIdForInstances = source._renderIdForInstances.copy();
-		dest._rotateYByPI = source._rotateYByPI.clone();
-		//dest._savedMaterial = source._savedMaterial;
-		dest._scene = source._scene;
-		dest._shouldGenerateFlatShading = source._shouldGenerateFlatShading;
-		//dest._skeleton = source._skeleton.clone(Tools.uuid(), Tools.uuid());
-		dest._submeshesOctree = source._submeshesOctree;
-		dest._visibility = source._visibility;
-		dest._visibleInstances = source._visibleInstances;
-		dest._waitingActions = source._waitingActions;
-		dest._waitingParentId = source._waitingParentId;
-		//if(source._worldMatricesInstancesArray != null) dest._worldMatricesInstancesArray = source._worldMatricesInstancesArray.copy();
-		dest._worldMatricesInstancesBuffer = source._worldMatricesInstancesBuffer;
-		dest._worldMatrix = source._worldMatrix.clone();
-		
-				
-		dest.definedFacingForward = source.definedFacingForward;
+	static private function _deepCopy(source:Mesh, dest:Mesh) {	
 		dest.position = source.position.clone();
 		dest.rotation = source.rotation.clone();
 		if (source.rotationQuaternion != null) {
@@ -276,7 +249,33 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		dest.useOctreeForCollisions = source.useOctreeForCollisions;
 		dest.layerMask = source.layerMask;
 		dest.ellipsoid = source.ellipsoid.clone();
-		dest.ellipsoidOffset = source.ellipsoidOffset.clone();
+		dest.ellipsoidOffset = source.ellipsoidOffset.clone();		
+		dest.state = source.state;
+		dest.definedFacingForward = source.definedFacingForward;
+		dest.animations = source.animations.copy();
+		dest.visibility = source.visibility;
+		dest.isPickable = source.isPickable;
+		dest.receiveShadows = source.receiveShadows;
+		dest.computeBonesUsingShaders = source.computeBonesUsingShaders;
+		dest.scalingDeterminant = source.scalingDeterminant;
+		dest.numBoneInfluencers = source.numBoneInfluencers;		
+		dest.alwaysSelectAsActiveMesh = source.alwaysSelectAsActiveMesh;
+		dest.edgesWidth = source.edgesWidth;
+		dest.edgesColor = source.edgesColor.clone();
+		dest.delayLoadState = source.delayLoadState;
+		dest.sideOrientation = source.sideOrientation;
+		dest.checkCollisions = source.checkCollisions;
+		
+		dest.__smartArrayFlags = source.__smartArrayFlags.copy();
+		
+		/*
+		dest.isBlocked = source.isBlocked;		
+		dest.areNormalsFrozen = source.areNormalsFrozen;
+		dest.useBones = source.useBones;
+		dest.worldMatrixFromCache = source.worldMatrixFromCache.clone();
+		dest.absolutePosition = source.absolutePosition.clone();
+		dest.isWorldMatrixFrozen = source.isWorldMatrixFrozen;		
+		*/	
 	}
 
 	// Methods
@@ -286,7 +285,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	}
 	
 	private function _sortLODLevels() {
-		this._LODLevels.sort(function(a:MeshLODLevel, b:MeshLODLevel) {
+		this._LODLevels.sort(function(a:MeshLODLevel, b:MeshLODLevel):Int {
 			if (a.distance < b.distance) {
 				return 1;
 			}
@@ -351,6 +350,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		}
 		
 		this._sortLODLevels();
+		
 		return this;
 	}
 
@@ -365,6 +365,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			if (this.onLODLevelSelection != null) {
                 this.onLODLevelSelection(distanceToCamera, this, this._LODLevels[this._LODLevels.length - 1].mesh);
             }
+			
 			return this;
 		}
 		
@@ -380,6 +381,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 				if (this.onLODLevelSelection != null) {
                     this.onLODLevelSelection(distanceToCamera, this, level.mesh);
                 }
+				
 				return level.mesh;
 			}
 		}
@@ -387,6 +389,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this.onLODLevelSelection != null) {
             this.onLODLevelSelection(distanceToCamera, this, this);
         }
+		
 		return this;
 	}
 	
@@ -399,6 +402,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this._geometry == null) {
 			return 0;
 		}
+		
 		return this._geometry.getTotalVertices();
 	}
 
@@ -406,6 +410,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this._geometry == null) {
 			return null;
 		}
+		
 		return this._geometry.getVerticesData(kind, copyWhenShared);
 	}
 
@@ -413,6 +418,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this._geometry == null) {
 			return null;
 		}
+		
 		return this._geometry.getVertexBuffer(kind);
 	}
 
@@ -421,8 +427,10 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			if (this._delayInfo != null) {
 				return this._delayInfo.indexOf(kind) != -1;
 			}
+			
 			return false;
 		}
+		
 		return this._geometry.isVerticesDataPresent(kind);
 	}
 
@@ -434,8 +442,10 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 					result.push(kind);
 				}
 			}
+			
 			return result;
 		}
+		
 		return this._geometry.getVerticesDataKinds();
 	}
 
@@ -443,6 +453,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this._geometry == null) {
 			return 0;
 		}
+		
 		return this._geometry.getTotalIndices();
 	}
 
@@ -450,6 +461,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		if (this._geometry == null) {
 			return [];
 		}
+		
 		return this._geometry.getIndices(copyWhenShared);
 	}
 
@@ -475,6 +487,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	
 	inline private function set_sideOrientation(value:Int):Int {
 		this._sideOrientation = value;
+		
 		return value;
 	}
 	
@@ -508,6 +521,12 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		this._preActivateId = sceneRenderId;
 		this._visibleInstances = null;
 	}
+	
+	override public function _preActivateForIntermediateRendering(renderId:Int) {
+        if (this._visibleInstances != null) {
+            this._visibleInstances.intermediateDefaultRenderId = renderId;
+        }
+    }
 
 	public function _registerInstanceForRenderId(instance:InstancedMesh, renderId:Int) {
 		if (this._visibleInstances == null) {
@@ -522,6 +541,10 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	}
 
 	inline public function refreshBoundingInfo() {
+		if (this._boundingInfo.isLocked) {
+			return;
+		}
+		
 		var data = this.getVerticesData(VertexBuffer.PositionKind);
 		
 		if (data != null) {
@@ -545,6 +568,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		}
 		
 		this.releaseSubMeshes();
+		
 		return new SubMesh(0, 0, totalVertices, 0, this.getTotalIndices(), this);
 	}
 
@@ -660,18 +684,20 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		// Wireframe
 		var indexBufferToBind:WebGLBuffer = null;
 		
-		switch (fillMode) {
-			case Material.PointFillMode:
-				indexBufferToBind = null;
-				
-			case Material.WireFrameFillMode:
-				indexBufferToBind = subMesh.getLinesIndexBuffer(this.getIndices(), engine);
-				
-			case Material.TriangleFillMode:
-				indexBufferToBind = this._geometry.getIndexBuffer();
-								
-			default:
-				indexBufferToBind = this._geometry.getIndexBuffer();
+		if (!this._unIndexed) {
+			switch (fillMode) {
+				case Material.PointFillMode:
+					indexBufferToBind = null;
+					
+				case Material.WireFrameFillMode:
+					indexBufferToBind = subMesh.getLinesIndexBuffer(this.getIndices(), engine);
+					
+				case Material.TriangleFillMode:
+					indexBufferToBind = this._geometry.getIndexBuffer();
+					
+				//default:
+				//	indexBufferToBind = this._geometry.getIndexBuffer();
+			}
 		}
 		
 		// VBOs
@@ -683,6 +709,8 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			return;
 		}
 		
+		this.onBeforeDrawObservable.notifyObservers(this);
+		
 		var engine:Engine = this.getScene().getEngine();
 		
 		// Draw order
@@ -691,34 +719,37 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 				engine.drawPointClouds(subMesh.verticesStart, subMesh.verticesCount, instancesCount);
 				
 			case Material.WireFrameFillMode:
-				engine.draw(false, 0, subMesh.linesIndexCount, instancesCount);	
+				if (this._unIndexed) {
+					engine.drawUnIndexed(false, subMesh.verticesStart, subMesh.verticesCount, instancesCount);
+				}
+				else {
+					engine.draw(false, 0, subMesh.linesIndexCount, instancesCount);	
+				}
 				
 			default:
-				engine.draw(true, subMesh.indexStart, subMesh.indexCount, instancesCount);
+				if (this._unIndexed) {
+					engine.drawUnIndexed(true, subMesh.verticesStart, subMesh.verticesCount, instancesCount);
+				}
+				else {
+					engine.draw(true, subMesh.indexStart, subMesh.indexCount, instancesCount);
+				}
 		}
 	}
 
-	public function registerBeforeRender(func:AbstractMesh->Void) {
-		this._onBeforeRenderCallbacks.push(func);
+	public function registerBeforeRender(func:AbstractMesh->Null<EventState>->Void) {
+		this.onBeforeRenderObservable.add(func);
 	}
 
-	public function unregisterBeforeRender(func:AbstractMesh->Void) {
-		var index = this._onBeforeRenderCallbacks.indexOf(func);
-		
-		if (index > -1) {
-			this._onBeforeRenderCallbacks.splice(index, 1);
-		}
+	public function unregisterBeforeRender(func:AbstractMesh->Null<EventState>->Void) {
+		this.onBeforeRenderObservable.removeCallback(func);
 	}
 
-	public function registerAfterRender(func:AbstractMesh->Void) {
-		this._onAfterRenderCallbacks.push(func);
+	public function registerAfterRender(func:AbstractMesh->Null<EventState>->Void) {
+		this.onAfterRenderObservable.add(func);
 	}
 
-	public function unregisterAfterRender(func:AbstractMesh->Void) {
-		var index = this._onAfterRenderCallbacks.indexOf(func);
-		if (index > -1) {
-			this._onAfterRenderCallbacks.splice(index, 1);
-		}
+	public function unregisterAfterRender(func:AbstractMesh->Null<EventState>->Void) {
+		this.onAfterRenderObservable.removeCallback(func);
 	}
 
 	public function _getInstancesRenderList(subMeshId:Int):_InstancesBatch {
@@ -729,18 +760,20 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		
 		if (this._visibleInstances != null) {
 			var currentRenderId:Int = scene.getRenderId();
+			var defaultRenderId = (scene._isInIntermediateRendering() ? this._visibleInstances.intermediateDefaultRenderId : this._visibleInstances.defaultRenderId);
 			this._batchCache.visibleInstances[subMeshId] = this._visibleInstances.map[currentRenderId];
 			var selfRenderId:Int = this._renderId;
 			
-			if (this._batchCache.visibleInstances[subMeshId] == null && this._visibleInstances.defaultRenderId > 0) {
-				this._batchCache.visibleInstances[subMeshId] = this._visibleInstances.map[this._visibleInstances.defaultRenderId];
-				currentRenderId = cast Math.max(this._visibleInstances.defaultRenderId, currentRenderId);
+			if (this._batchCache.visibleInstances[subMeshId] == null && defaultRenderId > 0) {
+                this._batchCache.visibleInstances[subMeshId] = this._visibleInstances.map[defaultRenderId];
+                currentRenderId = cast Math.max(defaultRenderId, currentRenderId);
 				selfRenderId = cast Math.max(this._visibleInstances.selfDefaultRenderId, currentRenderId);
 			}
 			
 			if (this._batchCache.visibleInstances[subMeshId] != null && this._batchCache.visibleInstances[subMeshId].length > 0) {
 				if (this._renderIdForInstances[subMeshId] == currentRenderId) {
 					this._batchCache.mustReturn = true;
+					
 					return this._batchCache;
 				}
 				
@@ -842,7 +875,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 
 	public function render(subMesh:SubMesh, enableAlphaMode:Bool) {
 		var scene = this.getScene();
-				
+		
 		// Managing instances
 		var batch = this._getInstancesRenderList(subMesh._id);
 		
@@ -855,9 +888,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			return;
 		}
 		
-		for (callbackIndex in 0...this._onBeforeRenderCallbacks.length) {
-			this._onBeforeRenderCallbacks[callbackIndex](this);
-		}
+		this.onBeforeRenderObservable.notifyObservers(this);
 		
 		var engine = scene.getEngine();
 		var hardwareInstancedRendering = (engine.getCaps().instancedArrays != null) && (batch.visibleInstances[subMesh._id] != null) && (batch.visibleInstances.length > subMesh._id && batch.visibleInstances[subMesh._id] != null);
@@ -920,9 +951,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
             engine.setAlphaMode(currentMode);
         }
 		
-		for (callbackIndex in 0...this._onAfterRenderCallbacks.length) {
-			this._onAfterRenderCallbacks[callbackIndex](this);
-		}
+		this.onAfterRenderObservable.notifyObservers(this);
 	}
 
 	inline public function getEmittedParticleSystems():Array<ParticleSystem> {
@@ -946,18 +975,6 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			var particleSystem = this.getScene().particleSystems[index];
 			if (descendants.indexOf(particleSystem.emitter) != -1) {
 				results.push(particleSystem);
-			}
-		}
-		
-		return results;
-	}
-
-	inline public function getChildren():Array<Node> {
-		var results:Array<Node> = [];
-		for (index in 0...this.getScene().meshes.length) {
-			var mesh = this.getScene().meshes[index];
-			if (mesh.parent == this) {
-				results.push(mesh);
 			}
 		}
 		
@@ -1099,9 +1116,10 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	}
 
 	override public function _generatePointsArray():Bool {
-		if (this._positions != null)
+		if (this._positions != null) {
 			return true;
-			
+		}
+		
 		this._positions = [];
 		
 		var data = this.getVerticesData(VertexBuffer.PositionKind);
@@ -1125,7 +1143,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	}
 
 	// Dispose
-	override public function dispose(doNotRecurse:Bool = false/*?doNotRecurse:Bool*/) {
+	override public function dispose(doNotRecurse:Bool = false) {
 		if (this._geometry != null) {
 			this._geometry.releaseForMesh(this, true);
 		}
@@ -1306,6 +1324,74 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 			var previousOne = previousSubmeshes[submeshIndex];
 			var subMesh = new SubMesh(previousOne.materialIndex, previousOne.indexStart, previousOne.indexCount, previousOne.indexStart, previousOne.indexCount, this);
 		}
+		
+		this.synchronizeInstances();
+	}
+	
+	public function convertToUnIndexedMesh() {
+		/// <summary>Remove indices by unfolding faces into buffers</summary>
+		/// <summary>Warning: This implies adding vertices to the mesh in order to get exactly 3 vertices per face</summary>
+		var kinds:Array<String> = this.getVerticesDataKinds();
+		var vbs:Map<String, VertexBuffer> = new Map();
+		var data:Map<String, Array<Float>> = new Map();
+		var newdata:Map<String, Array<Float>> = new Map();
+		var updatableNormals:Bool = false;		
+		var kind:String = "";
+		
+		for (kindIndex in 0...kinds.length) {
+			kind = kinds[kindIndex];
+			var vertexBuffer:VertexBuffer = this.getVertexBuffer(kind);
+			vbs[kind] = vertexBuffer;
+			data[kind] = vbs[kind].getData();
+			newdata[kind] = [];
+		}
+		
+		// Save previous submeshes
+		var previousSubmeshes:Array<SubMesh> = this.subMeshes.slice(0);
+		
+		var indices:Array<Int> = this.getIndices();
+		var totalIndices:Int = this.getTotalIndices();
+		
+		// Generating unique vertices per face
+		for (index in 0...totalIndices) {
+			var vertexIndex = indices[index];
+			
+			for (kindIndex in 0...kinds.length) {
+				kind = kinds[kindIndex];
+				var stride = vbs[kind].getStrideSize();
+				
+				for (offset in 0...stride) {
+					newdata[kind].push(data[kind][vertexIndex * stride + offset]);
+				}
+			}
+		}
+		
+		// Updating indices
+		var index:Int = 0;
+		while (index < totalIndices) {
+			indices[index] = index;
+			indices[index + 1] = index + 1;
+			indices[index + 2] = index + 2;
+			
+			index += 3;
+		}
+		
+		this.setIndices(indices);
+		
+		// Updating vertex buffers
+		for (kindIndex in 0...kinds.length) {
+			kind = kinds[kindIndex];
+			this.setVerticesData(kind, newdata[kind], vbs[kind].isUpdatable());
+		}
+		
+		// Updating submeshes
+		this.releaseSubMeshes();
+		for (submeshIndex in 0...previousSubmeshes.length) {
+			var previousOne = previousSubmeshes[submeshIndex];
+			var subMesh = new SubMesh(previousOne.materialIndex, previousOne.indexStart, previousOne.indexCount, previousOne.indexStart, previousOne.indexCount, this);
+		}
+		
+		this._unIndexed = true;
 		
 		this.synchronizeInstances();
 	}
@@ -1693,6 +1779,16 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 	 * @param {skeleton} skeleton to apply
 	 */
 	public function applySkeleton(skeleton:Skeleton):Mesh {
+		if (this.geometry == null) {
+			return this;
+		}
+		
+		if (this.geometry._softwareSkinningRenderId == this.getScene().getRenderId()) {
+			return this;
+		}
+		
+		this.geometry._softwareSkinningRenderId = this.getScene().getRenderId();
+		
 		if (!this.isVerticesDataPresent(VertexBuffer.PositionKind)) {
 			return this;
 		}
@@ -1734,7 +1830,7 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
         var matricesIndicesExtraData = needExtras ? this.getVerticesData(VertexBuffer.MatricesIndicesExtraKind) : null;
         var matricesWeightsExtraData = needExtras ? this.getVerticesData(VertexBuffer.MatricesWeightsExtraKind) : null;
 		
-		var skeletonMatrices = skeleton.getTransformMatrices();
+		var skeletonMatrices = skeleton.getTransformMatrices(this);
 		
 		var tempVector3 = Vector3.Zero();
 		var finalMatrix = new Matrix();
@@ -1877,5 +1973,220 @@ import com.omnihx3d.utils.typedarray.ArrayBuffer;
 		
 		return meshSubclass;
 	}
+	
+	public static function Parse(parsedMesh:Dynamic, scene:Scene, rootUrl:String):Mesh {
+        var mesh = new Mesh(parsedMesh.name, scene);
+        mesh.id = parsedMesh.id;
+		
+        Tags.AddTagsTo(mesh, parsedMesh.tags);
+		
+        mesh.position = Vector3.FromArray(parsedMesh.position);
+		
+        if (parsedMesh.rotationQuaternion != null) {
+            mesh.rotationQuaternion = Quaternion.FromArray(parsedMesh.rotationQuaternion);
+        } 
+		else if (parsedMesh.rotation != null) {
+            mesh.rotation = Vector3.FromArray(parsedMesh.rotation);
+        }
+		
+        mesh.scaling = Vector3.FromArray(parsedMesh.scaling);
+		
+        if (parsedMesh.localMatrix != null) {
+            mesh.setPivotMatrix(Matrix.FromArray(parsedMesh.localMatrix));
+        } 
+		else if (parsedMesh.pivotMatrix != null) {
+            mesh.setPivotMatrix(Matrix.FromArray(parsedMesh.pivotMatrix));
+        }
+		
+        mesh.setEnabled(parsedMesh.isEnabled);
+        mesh.isVisible = parsedMesh.isVisible;
+        mesh.infiniteDistance = parsedMesh.infiniteDistance;
+		
+        mesh.showBoundingBox = parsedMesh.showBoundingBox;
+        mesh.showSubMeshesBoundingBox = parsedMesh.showSubMeshesBoundingBox;
+		
+		if (parsedMesh.applyFog != null && parsedMesh.applyFog) {
+			mesh.applyFog = parsedMesh.applyFog;
+        }
+		
+        if (parsedMesh.pickable != null) {
+            mesh.isPickable = parsedMesh.pickable;
+        }
+		
+		if (parsedMesh.alphaIndex != null) {
+			mesh.alphaIndex = parsedMesh.alphaIndex;
+		}
+		
+        mesh.receiveShadows = parsedMesh.receiveShadows;
+        mesh.billboardMode = parsedMesh.billboardMode;
+		
+        if (parsedMesh.visibility != null) {
+            mesh.visibility = parsedMesh.visibility;
+        }
+		
+        mesh.checkCollisions = parsedMesh.checkCollisions;
+        mesh._shouldGenerateFlatShading = parsedMesh.useFlatShading;
+		
+		// freezeWorldMatrix
+        if (parsedMesh.freezeWorldMatrix != null) {
+            mesh._waitingFreezeWorldMatrix = parsedMesh.freezeWorldMatrix;
+        }
+		
+        // Parent
+        if (parsedMesh.parentId != null) {
+            mesh._waitingParentId = parsedMesh.parentId;
+        }
+		
+		// Actions
+        if (parsedMesh.actions != null) {
+            mesh._waitingActions = parsedMesh.actions;
+        }
+		
+        // Geometry
+        mesh.hasVertexAlpha = parsedMesh.hasVertexAlpha;
+		
+        if (parsedMesh.delayLoadingFile != null && parsedMesh.delayLoadingFile == true) {
+            mesh.delayLoadState = Engine.DELAYLOADSTATE_NOTLOADED;
+            mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
+            mesh._boundingInfo = new BoundingInfo(Vector3.FromArray(parsedMesh.boundingBoxMinimum), Vector3.FromArray(parsedMesh.boundingBoxMaximum));
+			
+            if (parsedMesh._binaryInfo != null) {
+                mesh._binaryInfo = parsedMesh._binaryInfo;
+            }
+			
+            mesh._delayInfo = [];
+            if (parsedMesh.hasUVs) {
+                mesh._delayInfo.push(VertexBuffer.UVKind);
+            }
+			
+            if (parsedMesh.hasUVs2) {
+                mesh._delayInfo.push(VertexBuffer.UV2Kind);
+            }
+			
+			if (parsedMesh.hasUVs3) {
+                mesh._delayInfo.push(VertexBuffer.UV3Kind);
+            }
+			
+			if (parsedMesh.hasUVs4) {
+                mesh._delayInfo.push(VertexBuffer.UV4Kind);
+            }
+			
+			if (parsedMesh.hasUVs5) {
+                mesh._delayInfo.push(VertexBuffer.UV5Kind);
+            }
+			
+			if (parsedMesh.hasUVs6) {
+                mesh._delayInfo.push(VertexBuffer.UV6Kind);
+            }
+			
+            if (parsedMesh.hasColors) {
+                mesh._delayInfo.push(VertexBuffer.ColorKind);
+            }
+			
+            if (parsedMesh.hasMatricesIndices) {
+                mesh._delayInfo.push(VertexBuffer.MatricesIndicesKind);
+            }
+			
+            if (parsedMesh.hasMatricesWeights) {
+                mesh._delayInfo.push(VertexBuffer.MatricesWeightsKind);
+            }
+			
+            mesh._delayLoadingFunction = Geometry.ImportGeometry;
+			
+            if (SceneLoader.ForceFullSceneLoadingForIncremental) {
+                mesh._checkDelayState();
+            }
+			
+        } 
+		else {
+            Geometry.ImportGeometry(parsedMesh, mesh);
+        }
+		
+        // Material
+        if (parsedMesh.materialId != null) {
+            mesh.setMaterialByID(parsedMesh.materialId);
+        } 
+		else {
+            mesh.material = null;
+        }
+		
+        // Skeleton
+        if (parsedMesh.skeletonId > -1) {
+            mesh.skeleton = scene.getLastSkeletonByID(parsedMesh.skeletonId);
+			if (parsedMesh.numBoneInfluencers != null) {
+                mesh.numBoneInfluencers = parsedMesh.numBoneInfluencers;
+            }
+        }
+		
+        // Physics
+        if (parsedMesh.physicsImpostor != null) {
+            if (!scene.isPhysicsEnabled()) {
+                scene.enablePhysics();
+            }
+			
+			var physicsOptions:PhysicsBodyCreationOptions = new PhysicsBodyCreationOptions();
+			physicsOptions.mass = parsedMesh.physicsMass;
+			physicsOptions.friction = parsedMesh.physicsFriction;
+			physicsOptions.restitution = parsedMesh.physicsRestitution;
+				
+            mesh.setPhysicsState(parsedMesh.physicsImpostor, physicsOptions);
+        }
+		
+        // Animations
+        if (parsedMesh.animations != null) {
+            for (animationIndex in 0...parsedMesh.animations.length) {
+                var parsedAnimation = parsedMesh.animations[animationIndex];				
+                mesh.animations.push(Animation.Parse(parsedAnimation));
+            }
+			
+			Node.ParseAnimationRanges(mesh, parsedMesh, scene);
+        }
+		
+        if (parsedMesh.autoAnimate != null) {
+            scene.beginAnimation(mesh, parsedMesh.autoAnimateFrom, parsedMesh.autoAnimateTo, parsedMesh.autoAnimateLoop, 1.0);
+        }
+		
+        // Layer Mask
+        if (parsedMesh.layerMask != null) {
+            mesh.layerMask = Std.int(Math.abs(parsedMesh.layerMask));
+        } 
+		else {
+            mesh.layerMask = 0xFFFFFFFF;
+        }
+		
+        // Instances
+        if (parsedMesh.instances != null) {
+            for (index in 0...parsedMesh.instances.length) {
+                var parsedInstance = parsedMesh.instances[index];
+                var instance = mesh.createInstance(parsedInstance.name);
+				
+                Tags.AddTagsTo(instance, parsedInstance.tags);
+				
+                instance.position = Vector3.FromArray(parsedInstance.position);
+				
+                if (parsedInstance.rotationQuaternion != null) {
+                    instance.rotationQuaternion = Quaternion.FromArray(parsedInstance.rotationQuaternion);
+                } 
+				else if (parsedInstance.rotation != null) {
+                    instance.rotation = Vector3.FromArray(parsedInstance.rotation);
+                }
+				
+                instance.scaling = Vector3.FromArray(parsedInstance.scaling);
+				
+                instance.checkCollisions = mesh.checkCollisions;
+				
+                if (parsedMesh.animations != null) {
+                    for (animationIndex in 0...parsedMesh.animations.length) {
+                        var parsedAnimation = parsedMesh.animations[animationIndex];
+                        instance.animations.push(Animation.Parse(parsedAnimation));
+                    }
+					
+					Node.ParseAnimationRanges(instance, parsedMesh, scene);
+                }
+            }
+        }
+		
+        return mesh;
+    }
 	
 }

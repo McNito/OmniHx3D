@@ -3,7 +3,7 @@ package com.omnihx3d.cameras;
 import com.omnihx3d.math.Matrix;
 import com.omnihx3d.math.Vector2;
 import com.omnihx3d.math.Vector3;
-import com.omnihx3d.tools.Tools;
+import com.omnihx3d.math.Tools;
 
 /**
 * ...
@@ -93,8 +93,7 @@ import com.omnihx3d.tools.Tools;
 		
 		var lockedTargetPosition:Vector3 = this._getLockedTargetPosition();
 		
-		return (this._cache.lockedTarget != null ? this._cache.lockedTarget.equals(lockedTargetPosition) : lockedTargetPosition == null)
-			&& this._cache.rotation.equals(this.rotation);
+		return (this._cache.lockedTarget != null ? this._cache.lockedTarget.equals(lockedTargetPosition) : lockedTargetPosition == null) && this._cache.rotation.equals(this.rotation);
 	}
 
 	// Methods
@@ -106,7 +105,7 @@ import com.omnihx3d.tools.Tools;
 	// Target
 	static var zUpVector:Vector3 = new Vector3(0, 1.0, 0);
 	static var vDir:Vector3 = Vector3.Zero();
-	inline public function setTarget(target:Vector3) {
+	public function setTarget(target:Vector3) {
 		this.upVector.normalize();
 		
 		Matrix.LookAtLHToRef(this.position, target, this.upVector, this._camMatrix);
@@ -177,26 +176,26 @@ import com.omnihx3d.tools.Tools;
 		
 		// Inertia
 		if (needToMove) {
-			if (Math.abs(this.cameraDirection.x) < Engine.Epsilon) {
+			if (Math.abs(this.cameraDirection.x) < Tools.Epsilon) {
 				this.cameraDirection.x = 0;
 			}
 			
-			if (Math.abs(this.cameraDirection.y) < Engine.Epsilon) {
+			if (Math.abs(this.cameraDirection.y) < Tools.Epsilon) {
 				this.cameraDirection.y = 0;
 			}
 			
-			if (Math.abs(this.cameraDirection.z) < Engine.Epsilon) {
+			if (Math.abs(this.cameraDirection.z) < Tools.Epsilon) {
 				this.cameraDirection.z = 0;
 			}
 			
 			this.cameraDirection.scaleInPlace(this.inertia);
 		}
 		if (needToRotate) {
-			if (Math.abs(this.cameraRotation.x) < Engine.Epsilon) {
+			if (Math.abs(this.cameraRotation.x) < Tools.Epsilon) {
 				this.cameraRotation.x = 0;
 			}
 			
-			if (Math.abs(this.cameraRotation.y) < Engine.Epsilon) {
+			if (Math.abs(this.cameraRotation.y) < Tools.Epsilon) {
 				this.cameraRotation.y = 0;
 			}
 			this.cameraRotation.scaleInPlace(this.inertia);
@@ -312,6 +311,21 @@ import com.omnihx3d.tools.Tools;
 		this._rigCamTransformMatrix = this._rigCamTransformMatrix.multiply(Matrix.Translation(target.x, target.y, target.z));
 		
 		Vector3.TransformCoordinatesToRef(this.position, this._rigCamTransformMatrix, result);
+	}
+	
+	override public function serialize():Dynamic {
+		var serializationObject = super.serialize();
+		serializationObject.speed = this.speed;
+		
+		if (this.rotation != null) {
+			serializationObject.rotation = this.rotation.asArray();
+		}
+		
+		if (this.lockedTarget != null && this.lockedTarget.id != null) {
+			serializationObject.lockedTargetId = this.lockedTarget.id;
+		}
+		
+		return serializationObject;
 	}
 	
 }

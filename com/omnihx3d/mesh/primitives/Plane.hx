@@ -1,5 +1,7 @@
 package com.omnihx3d.mesh.primitives;
 
+import com.omnihx3d.tools.Tags;
+
 /**
  * ...
  * @author Krtolica Vujadin
@@ -26,5 +28,18 @@ package com.omnihx3d.mesh.primitives;
 	override public function copy(id:String):Geometry {
 		return new Plane(id, this.getScene(), this.size, this.canBeRegenerated(), null, this.side);
 	}
+	
+	public static function Parse(parsedPlane:Dynamic, scene:Scene):Geometry {
+        if (Geometry.Parse(parsedPlane, scene) == null) {
+            return null; // null since geometry could be something else than a plane...
+        }
+		
+        var plane = new com.omnihx3d.mesh.primitives.Plane(parsedPlane.id, scene, parsedPlane.size, parsedPlane.canBeRegenerated, null);
+        Tags.AddTagsTo(plane, parsedPlane.tags);
+		
+        scene.pushGeometry(plane, true);
+		
+        return plane;
+    }
 	
 }

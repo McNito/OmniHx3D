@@ -36,13 +36,18 @@ import com.omnihx3d.utils.GL;
 	public var _cachedCoordinatesMode:Int;
 	public var _isDisabled:Bool;
 	public var _cubeFaces:Array<WebGLTexture>;
-	
-	public var __smartArrayFlags:Array<Int>;
+
+    #if (html5 && js)
+    public var _workingCanvas:js.html.CanvasElement;
+    public var _workingContext:js.html.CanvasRenderingContext2D;
+	#end
+
+	public var __smartArrayFlags:Array<Int> = [];
 	
 	
 	public function new(url:String, data:GLTexture) {
 		this.url = url;
-		this.data = data;		
+		this.data = data;	
 		
 		this.generateMipMaps = false;
 		this.isCube = false;

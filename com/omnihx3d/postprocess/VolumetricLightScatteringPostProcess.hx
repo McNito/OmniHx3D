@@ -33,7 +33,7 @@ import com.omnihx3d.tools.SmartArray;
 	private var _viewPort:Viewport;
 	private var _screenCoordinates:Vector2 = Vector2.Zero();
 	private var _cachedDefines:String;
-	private var _customMeshPosition: Vector3;
+	private var _customMeshPosition:Vector3;
 
 	/**
 	* Set if the post-process should use a custom position for the light source (true) or the internal mesh position (false)
@@ -49,7 +49,6 @@ import com.omnihx3d.tools.SmartArray;
 	public var mesh:Mesh;	
 	/**
 	* Set to true to use the diffuseColor instead of the diffuseTexture
-	* @type {boolean}
 	*/
 	public var useDiffuseColor:Bool = false;
 	
@@ -60,24 +59,20 @@ import com.omnihx3d.tools.SmartArray;
 
 	/**
 	* Controls the overall intensity of the post-process
-	* @type {number}
 	*/
-    public var exposure = 0.3;
+    public var exposure:Float = 0.3;
 	/**
 	* Dissipates each sample's contribution in range [0, 1]
-	* @type {number}
 	*/
-    public var decay = 0.96815;
+    public var decay:Float = 0.96815;
 	/**
 	* Controls the overall intensity of each sample
-	* @type {number}
 	*/
-    public var weight = 0.58767;
+    public var weight:Float = 0.58767;
 	/**
 	* Controls the density of each sample
-	* @type {number}
 	*/
-    public var density = 0.926;
+    public var density:Float = 0.926;
 	
 
 	/**
@@ -98,7 +93,8 @@ import com.omnihx3d.tools.SmartArray;
 			scene = camera.getScene();
 		} 
 		
-		this._viewPort = new Viewport(0, 0, 1, 1).toGlobal(scene.getEngine());
+		var engine = scene.getEngine();
+		this._viewPort = new Viewport(0, 0, 1, 1).toGlobal(engine.getRenderWidth(), engine.getRenderHeight());
 		
 		// Configure mesh
 		this.mesh = (mesh != null) ? mesh : VolumetricLightScatteringPostProcess.CreateDefaultMesh("VolumetricLightScatteringMesh", scene);
@@ -185,6 +181,9 @@ import com.omnihx3d.tools.SmartArray;
 			defines.push("#define NUM_BONE_INFLUENCERS " + mesh.numBoneInfluencers);
 			defines.push("#define BonesPerMesh " + (mesh.skeleton.bones.length + 1));
 		}
+		else {
+			defines.push("#define NUM_BONE_INFLUENCERS 0"); 
+		}
 		
 		// Instances
 		if (useInstances) {
@@ -259,7 +258,7 @@ import com.omnihx3d.tools.SmartArray;
 	private function _createPass(scene:Scene, ratio:Float) {
 		var engine = scene.getEngine();
 		
-		this._volumetricLightScatteringRTT = new RenderTargetTexture("volumetricLightScatteringMap", { width: engine.getRenderWidth() * ratio, height: engine.getRenderHeight() * ratio }, scene, false, true, Engine.TEXTURETYPE_UNSIGNED_INT);
+		this._volumetricLightScatteringRTT = new RenderTargetTexture("volumetricLightScatteringMap", Std.int(engine.getRenderWidth() * ratio), scene, false, true, Engine.TEXTURETYPE_UNSIGNED_INT);
 		this._volumetricLightScatteringRTT.wrapU = Texture.CLAMP_ADDRESSMODE;
 		this._volumetricLightScatteringRTT.wrapV = Texture.CLAMP_ADDRESSMODE;
 		this._volumetricLightScatteringRTT.renderList = null;
@@ -317,7 +316,7 @@ import com.omnihx3d.tools.SmartArray;
 				
 				// Bones
 				if (mesh.useBones) {
-					this._volumetricLightScatteringPass.setMatrices("mBones", mesh.skeleton.getTransformMatrices());
+					this._volumetricLightScatteringPass.setMatrices("mBones", mesh.skeleton.getTransformMatrices(mesh));
 				}
 				
 				// Draw

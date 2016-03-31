@@ -5,6 +5,7 @@ import com.omnihx3d.materials.textures.BaseTexture;
 import com.omnihx3d.materials.textures.RenderTargetTexture;
 import com.omnihx3d.mesh.AbstractMesh;
 import com.omnihx3d.tools.SmartArray;
+import com.omnihx3d.tools.Tags;
 import com.omnihx3d.math.Matrix;
 import com.omnihx3d.mesh.Mesh;
 
@@ -25,7 +26,7 @@ import com.omnihx3d.mesh.Mesh;
 	
 	public static inline var maxSimultaneousLights:Int = 4;
 
-
+	
 	public var id:String;
 	public var name:String;
 	public var checkReadyOnEveryCall:Bool = false;
@@ -37,22 +38,17 @@ import com.omnihx3d.mesh.Mesh;
 	public var onCompiled:Effect->Void;
 	public var onError:Effect->String->Void;
 	public var onDispose:Void->Void;
-	public var onBind:Material->Void;
+	public var onBind:Material->Mesh->Void;
 	public var getRenderTargetTextures:Void->SmartArray<RenderTargetTexture>;
+	
 	public var alphaMode:Int = Engine.ALPHA_COMBINE;
 	public var disableDepthWrite:Bool = false;
-	public var fogEnabled:Bool = false;
-	
-	public var __smartArrayFlags:Array<Int>;
-
-	public var _effect:Effect;
-	public var _wasPreviouslyReady:Bool = false;
-	private var _scene:Scene;
-	private var _fillMode:Int = Material.TriangleFillMode;
-	private var _cachedDepthWriteState:Bool;
+	public var fogEnabled:Bool = true;
 
 	public var pointSize:Float = 1.0;
 	public var zOffset:Float = 0.0;
+	
+	public var isFrozen(get, never):Bool;
 
 	public var wireframe(get, set):Bool;
 	private function get_wireframe():Bool {
@@ -80,7 +76,15 @@ import com.omnihx3d.mesh.Mesh;
 		this._fillMode = value;
 		return value;
 	}
-		
+
+	public var _effect:Effect;
+	public var _wasPreviouslyReady:Bool = false;
+	private var _scene:Scene;
+	private var _fillMode:Int = Material.TriangleFillMode;
+	private var _cachedDepthWriteState:Bool;
+	
+	public var __smartArrayFlags:Array<Int> = [];
+	
 
 	public function new(name:String, scene:Scene, doNotAdd:Bool = false) {
 		this.id = name;
@@ -98,6 +102,18 @@ import com.omnihx3d.mesh.Mesh;
 		untyped __js__("Object.defineProperty(this, 'fillMode', { get: this.get_fillMode, set: this.set_fillMode })");
 		untyped __js__("Object.defineProperty(this, 'pointsCloud', { get: this.get_pointsCloud, set: this.set_pointsCloud })");
 		#end
+	}
+	
+	private function get_isFrozen():Bool {
+		return this.checkReadyOnlyOnce;
+	}
+	
+	public function freeze() {
+		this.checkReadyOnlyOnce = true;
+	}
+	
+	public function unfreeze() {
+		this.checkReadyOnlyOnce = false;
 	}
 
 	public function isReady(?mesh:AbstractMesh, useInstances:Bool = false):Bool {
@@ -124,9 +140,7 @@ import com.omnihx3d.mesh.Mesh;
 		return null;
 	}
 
-	public function trackCreation(onCompiled:Effect->Void, onError:Effect->String->Void) {
-		
-	}
+	public function trackCreation(onCompiled:Effect->Void, onError:Effect->String->Void) { }
 	
 	public function markDirty() {
 		this._wasPreviouslyReady = false;
@@ -143,7 +157,7 @@ import com.omnihx3d.mesh.Mesh;
 		this._scene._cachedMaterial = this;
 		
         if (this.onBind != null) {
-            this.onBind(this);
+            this.onBind(this, mesh);
         }
 		
 		if (this.disableDepthWrite) {
@@ -153,8 +167,7 @@ import com.omnihx3d.mesh.Mesh;
         }
 	}
 
-	public function bindOnlyWorldMatrix(world:Matrix) {
-	}
+	public function bindOnlyWorldMatrix(world:Matrix) { }
 
 	public function unbind():Void {
 		if (this.disableDepthWrite) {
@@ -163,7 +176,7 @@ import com.omnihx3d.mesh.Mesh;
         }
 	}
 	
-	public function clone(name:String):Material {
+	public function clone(name:String, cloneChildren:Bool = false):Material {
 		return null;
 	}
 	
@@ -227,6 +240,54 @@ import com.omnihx3d.mesh.Mesh;
 		other.disableDepthWrite = this.disableDepthWrite;
 		other.pointSize = this.pointSize;
 		other.pointsCloud = this.pointsCloud;
+	}
+	
+	public function serialize():Dynamic {
+		var serializationObject:Dynamic = { };
+		
+		serializationObject.name = this.name;
+		serializationObject.alpha = this.alpha;
+		
+		serializationObject.id = this.id;
+		serializationObject.tags = Tags.GetTags(this);
+		serializationObject.backFaceCulling = this.backFaceCulling;
+		
+		return serializationObject;
+	}
+	
+	public static function ParseMultiMaterial(parsedMultiMaterial:Dynamic, scene:Scene):MultiMaterial {
+		var multiMaterial = new MultiMaterial(parsedMultiMaterial.name, scene);
+		
+		multiMaterial.id = parsedMultiMaterial.id;
+		
+		Tags.AddTagsTo(multiMaterial, parsedMultiMaterial.tags);
+		
+		for (matIndex in 0...parsedMultiMaterial.materials.length) {
+			var subMatId = parsedMultiMaterial.materials[matIndex];
+			
+			if (subMatId != null) {
+				multiMaterial.subMaterials.push(scene.getMaterialByID(subMatId));
+			} 
+			else {
+				multiMaterial.subMaterials.push(null);
+			}
+		}
+		
+		return multiMaterial;
+	}
+
+	public static function Parse(parsedMaterial:Dynamic, scene:Scene, rootUrl:String) {
+		if (parsedMaterial.customType == null) {
+			return StandardMaterial.Parse(parsedMaterial, scene, rootUrl);
+		}
+		
+		var materialType = Type.resolveClass(parsedMaterial.customType);
+		
+		if (materialType != null) {
+			return Type.createEmptyInstance(materialType).Parse(parsedMaterial, scene, rootUrl);
+		}
+		
+		return null;
 	}
 	
 }

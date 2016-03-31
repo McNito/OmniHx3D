@@ -37,7 +37,7 @@ import com.omnihx3d.tools.SmartArray;
 		var engine = scene.getEngine();
 		
 		// Render target
-		this._depthMap = new RenderTargetTexture("depthMap", { width: engine.getRenderWidth(), height: engine.getRenderHeight()}, this._scene, false, true, type);
+		this._depthMap = new RenderTargetTexture("depthMap", { width: engine.getRenderWidth(), height: engine.getRenderHeight() }, this._scene, false, true, type);
 		this._depthMap.wrapU = Texture.CLAMP_ADDRESSMODE;
 		this._depthMap.wrapV = Texture.CLAMP_ADDRESSMODE;
 		this._depthMap.refreshRate = 1;
@@ -53,7 +53,7 @@ import com.omnihx3d.tools.SmartArray;
 		var renderSubMesh = function(subMesh:SubMesh) {
 			var mesh:Mesh = subMesh.getRenderingMesh();
 			var scene = this._scene;
-			var engine = scene.getEngine();
+			//var engine = scene.getEngine();
 			
 			// Culling
 			engine.setState(subMesh.getMaterial().backFaceCulling);
@@ -85,7 +85,7 @@ import com.omnihx3d.tools.SmartArray;
 				
 				// Bones				
 				if (mesh.useBones && mesh.computeBonesUsingShaders) {
-					this._effect.setMatrices("mBones", mesh.skeleton.getTransformMatrices());
+					this._effect.setMatrices("mBones", mesh.skeleton.getTransformMatrices(mesh));
 				}
 				
 				// Draw
@@ -94,11 +94,10 @@ import com.omnihx3d.tools.SmartArray;
 			}
 		};
 		
-		this._depthMap.customRenderFunction = function(opaqueSubMeshes:SmartArray<SubMesh>, alphaTestSubMeshes:SmartArray<SubMesh>) {			
+		this._depthMap.customRenderFunction = function(opaqueSubMeshes:SmartArray<SubMesh>, alphaTestSubMeshes:SmartArray<SubMesh>) {	
 			for (index in 0...opaqueSubMeshes.length) {
 				renderSubMesh(opaqueSubMeshes.data[index]);
 			}
-			
 			for (index in 0...alphaTestSubMeshes.length) {
 				renderSubMesh(alphaTestSubMeshes.data[index]);
 			}
@@ -137,6 +136,9 @@ import com.omnihx3d.tools.SmartArray;
             }
             defines.push("#define NUM_BONE_INFLUENCERS " + mesh.numBoneInfluencers);
 			defines.push("#define BonesPerMesh " + (mesh.skeleton.bones.length + 1));
+		}
+		else {
+			defines.push("#define NUM_BONE_INFLUENCERS 0");
 		}
 		
 		// Instances

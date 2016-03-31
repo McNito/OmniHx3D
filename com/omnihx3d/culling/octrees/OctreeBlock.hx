@@ -2,7 +2,7 @@ package com.omnihx3d.culling.octrees;
 
 import com.omnihx3d.math.Vector3;
 import com.omnihx3d.math.Plane;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 import com.omnihx3d.tools.SmartArray;
 import haxe.ds.Vector;
 
@@ -79,6 +79,7 @@ import haxe.ds.Vector;
 				var block = this.blocks[index];
 				block.addEntry(entry);
 			}
+			
 			return;
 		}
 		
@@ -103,12 +104,14 @@ import haxe.ds.Vector;
 					var block = this.blocks[index];
 					block.select(frustumPlanes, selection, allowDuplicate);
 				}
+				
 				return;
 			}
 			
 			if (allowDuplicate) {
 				selection.concatArray(this.entries);
-			} else {
+			} 
+			else {
 				selection.concatArrayWithNoDuplicate(this.entries);
 			}
 		}
@@ -121,12 +124,14 @@ import haxe.ds.Vector;
 					var block = this.blocks[index];
 					block.intersects(sphereCenter, sphereRadius, selection, allowDuplicate);
 				}
+				
 				return;
 			}
 			
 			if (allowDuplicate) {
 				selection.concatArray(this.entries);
-			} else {
+			} 
+			else {
 				selection.concatArrayWithNoDuplicate(this.entries);
 			}
 		}
@@ -139,6 +144,7 @@ import haxe.ds.Vector;
 					var block = this.blocks[index];
 					block.intersectsRay(ray, selection);
 				}
+				
 				return;
 			}
 			selection.concatArrayWithNoDuplicate(this.entries);

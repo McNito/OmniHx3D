@@ -37,8 +37,9 @@ import com.omnihx3d.Node;
 	private var _offsetsCache:Array<Dynamic> = [];// { };
 	private var _highLimitsCache:Array<Dynamic> = []; // { };
 	private var _stopped:Bool = false;
-	private var _easingFunction:IEasingFunction;
 	public var _target:Dynamic;
+	private var _blendingFactor:Float = 0;
+	private var _easingFunction:IEasingFunction;
 	
 	// The set of event that will be linked to this animation
 	private var _events:Array<AnimationEvent> = [];
@@ -52,8 +53,13 @@ import com.omnihx3d.Node;
 	public var currentFrame:Int;
 	
 	public var allowMatricesInterpolation:Bool = false;
+	
+	public var blendingSpeed:Float = 0.01;
+	private var _originalBlendValue:Dynamic;
+	
+	public var enableBlending:Bool;
 
-	private var _ranges:Array<AnimationRange> = [];
+	private var _ranges:Map<String, AnimationRange> = new Map();
 	
 	
 	private static function _PrepareAnimation(name:String, targetProperty:String, framePerSecond:Int, totalFrame:Int, from:Dynamic, to:Dynamic, ?loopMode:Int, ?easingFunction:EasingFunction):Animation {
@@ -107,13 +113,14 @@ import com.omnihx3d.Node;
 		return node.getScene().beginAnimation(node, 0, totalFrame, (animation.loopMode == 1), 1.0, onAnimationEnd);
 	}
 
-	public function new(name:String, targetProperty:String, framePerSecond:Int, dataType:Int, loopMode:Int = -1) {
+	public function new(name:String, targetProperty:String, framePerSecond:Int, dataType:Int, loopMode:Int = -1, enableBlending:Bool = false) {
 		this.name = name;
         this.targetProperty = targetProperty;
         this.targetPropertyPath = targetProperty.split(".");
         this.framePerSecond = framePerSecond;
         this.dataType = dataType;
 		this.loopMode = loopMode == -1 ? Animation.ANIMATIONLOOPMODE_CYCLE : loopMode;
+		this.enableBlending = enableBlending;
 	}
 
 	// Methods 
@@ -141,33 +148,42 @@ import com.omnihx3d.Node;
 		}
 	}
 	
+	public function createRange(name:String, from:Float, to:Float) {
+		// check name not already in use; could happen for bones after serialized
+        if (!this._ranges.exists(name)){
+            this._ranges[name] = new AnimationRange(name, from, to);
+        }
+	}
+
+	public function deleteRange(name:String, deleteFrames:Bool = true) {
+		if (this._ranges[name] != null){
+			if (deleteFrames) {
+				var from = this._ranges[name].from;
+				var to = this._ranges[name].to;
+				
+				// this loop MUST go high to low for multiple splices to work
+				var key = this._keys.length - 1;
+				while (key >= 0) {
+					if (this._keys[key].frame >= from  && this._keys[key].frame <= to) {
+					   this._keys.splice(key, 1); 
+					}
+					key--;
+				}
+			}
+			this._ranges.remove(name);
+		}
+	}
+
+	public function getRange(name:String):AnimationRange {		
+		return this._ranges[name];
+	}
+	
 	public function reset() {
 		this._offsetsCache = [];
 		this._highLimitsCache = [];
 		this.currentFrame = 0;
-	}
-	
-	public function createRange(name:String, from:Float, to:Float) {
-		this._ranges.push(new AnimationRange(name, from, to));
-	}
-
-	public function deleteRange(name:String) {
-		for (index in 0...this._ranges.length) {
-			if (this._ranges[index].name == name) {
-				this._ranges.splice(index, 1);
-				return;
-			}
-		}
-	}
-
-	public function getRange(name:String):AnimationRange {
-		for (index in 0...this._ranges.length) {
-			if (this._ranges[index].name == name) {                    
-				return this._ranges[index];
-			}
-		}
-		
-		return null;
+		this._blendingFactor = 0;
+		this._originalBlendValue = null;
 	}
 	
 	inline public function isStopped():Bool {
@@ -176,6 +192,18 @@ import com.omnihx3d.Node;
 
 	inline public function getKeys():Array<BabylonFrame> {
 		return this._keys;
+	}
+	
+	inline public function getHighestFrame():Int {
+		var ret = 0; 
+		
+		for (key in 0...this._keys.length) {
+			if (ret < this._keys[key].frame) {
+				ret = this._keys[key].frame; 
+			}
+		}
+		
+		return ret;
 	}
 	
 	inline public function getEasingFunction() {
@@ -206,33 +234,23 @@ import com.omnihx3d.Node;
 		return Color3.Lerp(startValue, endValue, gradient);
 	}
 	
-	static var matrixInterpolateFunction_startScale:Vector3 = Vector3.Zero();
-	static var matrixInterpolateFunction_startRotation:Quaternion = new Quaternion();
-	static var matrixInterpolateFunction_startTranslation:Vector3 = Vector3.Zero();
-	static var matrixInterpolateFunction_endScale:Vector3 = Vector3.Zero();
-	static var matrixInterpolateFunction_endRotation:Quaternion = new Quaternion();
-	static var matrixInterpolateFunction_endTranslation:Vector3 = Vector3.Zero();
 	public function matrixInterpolateFunction(startValue:Matrix, endValue:Matrix, gradient:Float):Matrix {
-		matrixInterpolateFunction_startScale.set(0, 0, 0);
-		matrixInterpolateFunction_startRotation.set();
-		matrixInterpolateFunction_startTranslation.set(0, 0, 0);
-		startValue.decompose(matrixInterpolateFunction_startScale, matrixInterpolateFunction_startRotation, matrixInterpolateFunction_startTranslation);
-		
-		matrixInterpolateFunction_endScale.set(0, 0, 0);
-		matrixInterpolateFunction_endRotation.set();
-		matrixInterpolateFunction_endTranslation.set(0, 0, 0);
-		endValue.decompose(matrixInterpolateFunction_endScale, matrixInterpolateFunction_endRotation, matrixInterpolateFunction_endTranslation);
-		
-		var resultScale = this.vector3InterpolateFunction(matrixInterpolateFunction_startScale, matrixInterpolateFunction_endScale, gradient);
-		var resultRotation = this.quaternionInterpolateFunction(matrixInterpolateFunction_startRotation, matrixInterpolateFunction_endRotation, gradient);
-		var resultTranslation = this.vector3InterpolateFunction(matrixInterpolateFunction_startTranslation, matrixInterpolateFunction_endTranslation, gradient);
-		
-		return Matrix.Compose(resultScale, resultRotation, resultTranslation);
+		return Matrix.Lerp(startValue, endValue, gradient);
 	}
 
 	public function clone():Animation {
-		var clone = new Animation(this.name, this.targetPropertyPath.join("."), this.framePerSecond, this.dataType, this.loopMode);
-		clone.setKeys(this._keys);
+		var clone = new Animation(this.name, this.targetPropertyPath.join("."), this.framePerSecond, this.dataType, this.loopMode, this.enableBlending);
+		
+		if (this._keys != null) {
+			clone.setKeys(this._keys);
+		}
+		
+		if (this._ranges != null) {
+			clone._ranges = new Map();
+			for (name in this._ranges.keys()) {
+				clone._ranges[name] = this._ranges[name].clone();
+			}
+		}
 		
 		return clone;
 	}
@@ -241,6 +259,14 @@ import com.omnihx3d.Node;
 		this._keys = values.slice(0);
 		this._offsetsCache = [];
 		this._highLimitsCache = [];
+	}
+	
+	private function _getKeyValue(value:Dynamic):Dynamic {
+		if (Reflect.isFunction(value)) {
+			return value();
+		}
+		
+		return value;
 	}
 
 	private function _interpolate(currentFrame:Int, repeatCount:Int, loopMode:Int, ?offsetValue:Dynamic, ?highLimitValue:Dynamic):Dynamic {
@@ -323,11 +349,14 @@ import com.omnihx3d.Node;
 					// Matrix
 					case Animation.ANIMATIONTYPE_MATRIX:
 						switch (loopMode) {
-							case Animation.ANIMATIONLOOPMODE_CYCLE, Animation.ANIMATIONLOOPMODE_CONSTANT, Animation.ANIMATIONLOOPMODE_RELATIVE:
-								//return this.matrixInterpolateFunction(startValue, endValue, gradient);
+							case Animation.ANIMATIONLOOPMODE_CYCLE, Animation.ANIMATIONLOOPMODE_CONSTANT:
+								return this.matrixInterpolateFunction(startValue, endValue, gradient);
 								
-							//case Animation.ANIMATIONLOOPMODE_RELATIVE:
+							case Animation.ANIMATIONLOOPMODE_RELATIVE:
 								return startValue;
+								
+							default:
+								//
 						}
 					default:
 						//
@@ -335,14 +364,17 @@ import com.omnihx3d.Node;
 			}
 		}
 		
-		return this._keys[this._keys.length - 1].value;
+		return this._getKeyValue(this._keys[this._keys.length - 1].value);
 	}
 	
-	inline public function setValue(currentValue:Dynamic) {
+	inline public function setValue(currentValue:Dynamic, blend:Bool = false) {
 		// Set value
+		var path:Dynamic;
+		var destination:Dynamic;
+		
 		if (this.targetPropertyPath.length > 1) {
-			var property:Dynamic = null;
-			switch(this.targetPropertyPath[0]) {
+			var property = Reflect.getProperty(this._target, this.targetPropertyPath[0]);
+			/*switch(this.targetPropertyPath[0]) {
 				case "scaling":
 					property = untyped this._target.scaling;
 					
@@ -354,13 +386,16 @@ import com.omnihx3d.Node;
 					
 				default: 
 					property = Reflect.getProperty(this._target, this.targetPropertyPath[0]);
-			}			
+			}*/			
 			
 			for (index in 1...this.targetPropertyPath.length - 1) {
 				property = Reflect.getProperty(property, this.targetPropertyPath[index]);
 			}
 			
-			switch(this.targetPropertyPath[this.targetPropertyPath.length - 1]) {					
+			path = this.targetPropertyPath[this.targetPropertyPath.length - 1];
+			destination = property;
+			
+			/*switch(this.targetPropertyPath[this.targetPropertyPath.length - 1]) {					
 				case "x":
 					untyped property.x = currentValue;
 					
@@ -372,10 +407,10 @@ import com.omnihx3d.Node;
 					
 				default:
 					Reflect.setProperty(property, this.targetPropertyPath[this.targetPropertyPath.length - 1], currentValue);
-			}			
+			}*/	
 		} 
 		else {
-			switch(this.targetPropertyPath[0]) {
+			/*switch(this.targetPropertyPath[0]) {
 				case "_matrix":
 					untyped this._target._matrix = currentValue;
 					
@@ -387,10 +422,37 @@ import com.omnihx3d.Node;
 					
 				case "scaling":
 					untyped this._target.scaling = currentValue;
-									
+				 
 				default:
 					Reflect.setProperty(this._target, this.targetPropertyPath[0], currentValue);
+			}*/
+			
+			path = this.targetPropertyPath[0];
+			destination = this._target;
+		}
+		
+		// Blending
+		if (this.enableBlending && this._blendingFactor <= 1.0) {
+			if (this._originalBlendValue == null) {
+				this._originalBlendValue = Reflect.getProperty(destination, path);
 			}
+			
+			if (!Std.is(this._originalBlendValue, Float) && !Std.is(this._originalBlendValue, Int)) { // Complex value				
+				if (Reflect.hasField(this._originalBlendValue, "Lerp")) { // Lerp supported
+					Reflect.setField(destination, path, this._originalBlendValue.Lerp(currentValue, this._originalBlendValue, this._blendingFactor));
+				} 
+				else { // Blending not supported
+					Reflect.setField(destination, path, currentValue);
+				}
+			} 
+			else { // Direct value
+				Reflect.setField(destination, path, this._originalBlendValue * (1.0 - this._blendingFactor) + this._blendingFactor * currentValue);
+			}
+			
+			this._blendingFactor += this.blendingSpeed;
+		} 
+		else {
+			Reflect.setField(destination, path, currentValue);
 		}
 		
 		if (this._target.markAsDirty != null) {
@@ -411,7 +473,7 @@ import com.omnihx3d.Node;
 		this.setValue(currentValue);
 	}
 
-	public function animate(delay:Float, from:Int, to:Int, loop:Bool, speedRatio:Float):Bool {
+	public function animate(delay:Float, from:Int, to:Int, loop:Bool, speedRatio:Float, blend:Bool = false):Bool {
 		if (this.targetPropertyPath == null || this.targetPropertyPath.length < 1) {
 			this._stopped = true;
 			return false;
@@ -446,7 +508,7 @@ import com.omnihx3d.Node;
 		
 		if (ratio > range && !loop) { // If we are out of range and not looping get back to caller
 			returnValue = false;
-			highLimitValue = this._keys[this._keys.length - 1].value;
+			highLimitValue = this._getKeyValue(this._keys[this._keys.length - 1].value);
 		} 
 		else {
 			// Get max value if required
@@ -518,6 +580,9 @@ import com.omnihx3d.Node;
 		var currentFrame = cast (returnValue ? from + ratio % range : to);
 		var currentValue = this._interpolate(currentFrame, repeatCount, this.loopMode, offsetValue, highLimitValue);
 		
+		// Set value
+		this.setValue(currentValue);
+		
 		// Check events
 		var index:Int = 0;
 		while (index < this._events.length) {
@@ -541,14 +606,112 @@ import com.omnihx3d.Node;
 			++index;
 		}
 		
-		// Set value
-		this.setValue(currentValue);
-		
 		if (!returnValue) {
 			this._stopped = true;
 		}
 		
 		return returnValue;
+	}
+	
+	public function serialize():Dynamic {
+		var serializationObject:Dynamic = { };
+		
+		serializationObject.name = this.name;
+		serializationObject.property = this.targetProperty;
+		serializationObject.framePerSecond = this.framePerSecond;
+		serializationObject.dataType = this.dataType;
+		serializationObject.loopBehavior = this.loopMode;
+		
+		var dataType = this.dataType;
+		serializationObject.keys = [];
+		var keys = this.getKeys();
+		for (index in 0...keys.length) {
+			var animationKey = keys[index];
+			
+			var key:Dynamic = { };
+			key.frame = animationKey.frame;
+			
+			switch (dataType) {
+				case Animation.ANIMATIONTYPE_FLOAT:
+					key.values = [animationKey.value];
+					
+				case Animation.ANIMATIONTYPE_QUATERNION, Animation.ANIMATIONTYPE_MATRIX, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONTYPE_COLOR3:
+					key.values = animationKey.value.asArray();
+				
+			}
+			
+			serializationObject.keys.push(key);
+		}
+		
+		serializationObject.ranges = [];
+        for (name in this._ranges.keys()) {
+            var range:Dynamic = { };
+            range.name = name;
+            range.from = this._ranges[name].from;
+            range.to   = this._ranges[name].to;
+            serializationObject.ranges.push(range);
+        }
+		
+		return serializationObject;
+	}
+	
+	public static function Parse(parsedAnimation:Dynamic):Animation {
+        var animation = new Animation(parsedAnimation.name, parsedAnimation.property, parsedAnimation.framePerSecond, parsedAnimation.dataType, parsedAnimation.loopBehavior);
+		
+        var dataType = parsedAnimation.dataType;
+        var keys:Array<BabylonFrame> = [];
+		var data:Dynamic = null;
+        for (index in 0...parsedAnimation.keys.length) {
+            var key = parsedAnimation.keys[index];
+			
+            switch (dataType) {
+                case Animation.ANIMATIONTYPE_FLOAT:
+                    data = key.values[0];
+                    
+                case Animation.ANIMATIONTYPE_QUATERNION:
+                    data = Quaternion.FromArray(key.values);
+                    
+                case Animation.ANIMATIONTYPE_MATRIX:
+                    data = Matrix.FromArray(key.values);
+					
+				case Animation.ANIMATIONTYPE_COLOR3:
+                    data = Color3.FromArray(key.values);
+                    
+                case Animation.ANIMATIONTYPE_VECTOR3:
+					data = Vector3.FromArray(key.values);
+					
+                default:
+                    data = Vector3.FromArray(key.values);
+                    
+            }
+			
+            keys.push({
+                frame: key.frame,
+                value: data
+            });
+        }
+		
+        animation.setKeys(keys);
+		
+		if (parsedAnimation.ranges != null) {
+            for (index in 0...parsedAnimation.ranges.length) {
+                data = parsedAnimation.ranges[index];
+                animation.createRange(data.name, data.from, data.to);
+            }
+        }
+		
+        return animation;
+    }
+	
+	public static function AppendSerializedAnimations(source:IAnimatable, destination:Dynamic) {
+		if (source.animations != null) {
+			destination.animations = [];
+			for (animationIndex in 0...source.animations.length) {
+				var animation = source.animations[animationIndex];
+				
+				destination.animations.push(animation.serialize());
+			}
+		}
 	}
 
 }

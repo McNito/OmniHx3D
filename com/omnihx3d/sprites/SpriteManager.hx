@@ -7,7 +7,7 @@ import com.omnihx3d.tools.Tools;
 import com.omnihx3d.math.Vector3;
 import com.omnihx3d.math.Matrix;
 import com.omnihx3d.collisions.PickingInfo;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 import com.omnihx3d.cameras.Camera;
 
 import com.omnihx3d.utils.typedarray.Float32Array;
@@ -42,6 +42,8 @@ import com.omnihx3d.utils.typedarray.Float32Array;
 	private var _vertices:Float32Array;
 	private var _effectBase:Effect;
 	private var _effectFog:Effect;
+	
+	public var texture(get, set):Texture;
 	
 
 	public function new(name:String, imgUrl:String, capacity:Int, cellSize:Float, scene:Scene, ?epsilon:Float, ?samplingMode:Int = Texture.TRILINEAR_SAMPLINGMODE) {
@@ -90,6 +92,13 @@ import com.omnihx3d.utils.typedarray.Float32Array;
 			["position", "options", "cellInfo", "color"],
 			["view", "projection", "textureInfos", "alphaTest", "vFogInfos", "vFogColor"],
 			["diffuseSampler"], "#define FOG");
+	}
+	
+	private function get_texture():Texture {
+		return this._spriteTexture;
+	}
+	private function set_texture(value:Texture):Texture {
+		return this._spriteTexture = value;
 	}
 
 	private function _appendSpriteVertex(index:Int, sprite:Sprite, offsetX:Float, offsetY:Float, rowSize:Int) {

@@ -17,10 +17,11 @@ package com.omnihx3d.actions;
 	
 
 	public function new(triggerOptions:Dynamic, ?condition:Condition) {
-		if (Reflect.getProperty(triggerOptions, "parameter") != null) {
-			this.trigger = Reflect.getProperty(triggerOptions, "trigger");
-			this._triggerParameter = Reflect.getProperty(triggerOptions, "parameter");
-		} else {
+		if (triggerOptions.parameter != null) {
+			this.trigger = triggerOptions.trigger;
+			this._triggerParameter = triggerOptions.parameter;
+		} 
+		else {
 			this.trigger = triggerOptions;
 		}
 		
@@ -29,9 +30,7 @@ package com.omnihx3d.actions;
 	}
 
 	// Methods
-	public function _prepare() {
-		
-	}
+	public function _prepare() { }
 
 	public function getTriggerParameter():Dynamic {
 		return this._triggerParameter;
@@ -47,7 +46,8 @@ package com.omnihx3d.actions;
 				if (!condition._currentResult) {
 					return;
 				}
-			} else {
+			} 
+			else {
 				condition._evaluationId = currentRenderId;
 				
 				if (!condition.isValid()) {
@@ -61,6 +61,12 @@ package com.omnihx3d.actions;
 		
 		this._nextActiveAction.execute(evt);
 		
+		this.skipToNextActiveAction();
+	}
+
+	public function execute(?evt:ActionEvent) { }
+	
+	public function skipToNextActiveAction() {
 		if (this._nextActiveAction._child != null) {
 			
 			if (this._nextActiveAction._child._actionManager == null) {
@@ -68,13 +74,10 @@ package com.omnihx3d.actions;
 			}
 			
 			this._nextActiveAction = this._nextActiveAction._child;
-		} else {
+		} 
+		else {
 			this._nextActiveAction = this;
 		}
-	}
-
-	public function execute(?evt:ActionEvent) {
-
 	}
 
 	public function then(action:Action):Action {

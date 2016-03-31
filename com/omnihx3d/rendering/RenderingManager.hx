@@ -15,7 +15,7 @@ import com.omnihx3d.tools.Tools;
 
 @:expose('BABYLON.RenderingManager') class RenderingManager {
 	
-	public static var MAX_RENDERINGGROUPS:Int = 4;
+	public static inline var MAX_RENDERINGGROUPS:Int = 4;
 
 	private var _scene:Scene;
 	private var _renderingGroups:Array<RenderingGroup> = [];
@@ -81,10 +81,12 @@ import com.omnihx3d.tools.Tools;
 	}
 
 	inline private function _clearDepthBuffer() {
-		if (!this._depthBufferAlreadyCleaned) {
-			this._scene.getEngine().clear(new Color4(0, 0, 0), false, true);
-			this._depthBufferAlreadyCleaned = true;
-		}		
+		if (this._depthBufferAlreadyCleaned) {
+			return;
+		}
+		
+		this._scene.getEngine().clear(0, false, true);
+		this._depthBufferAlreadyCleaned = true;		
 	}
 	
 	private function _renderSpritesAndParticles() {
@@ -106,7 +108,7 @@ import com.omnihx3d.tools.Tools;
 		
 		var index:Int = 0;
 		while(index < RenderingManager.MAX_RENDERINGGROUPS) {
-			this._depthBufferAlreadyCleaned = false;
+			this._depthBufferAlreadyCleaned = index == 0;
 			_renderingGroup = this._renderingGroups[index];
 			_needToStepBack = false;
 			
@@ -138,9 +140,9 @@ import com.omnihx3d.tools.Tools;
 	}
 
 	public function reset() {
-		for (rg in this._renderingGroups) {
-			if(rg != null) {
-				rg.prepare();
+		for (renderingGroup in this._renderingGroups) {
+			if(renderingGroup != null) {
+				renderingGroup.prepare();
 			}
 		}
 	}

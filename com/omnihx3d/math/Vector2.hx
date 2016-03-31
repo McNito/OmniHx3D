@@ -12,7 +12,7 @@ import com.omnihx3d.tools.Tools;
 	public var y:Float;
 	
 	
-	public function new(x:Float, y:Float) {
+	inline public function new(x:Float, y:Float) {
 		this.x = x;
 		this.y = y;
 	}
@@ -122,7 +122,7 @@ import com.omnihx3d.tools.Tools;
 		return otherVector != null && this.x == otherVector.x && this.y == otherVector.y;
 	}
 	
-	inline public function equalsWithEpsilon(otherVector:Vector2, epsilon:Float = Engine.Epsilon):Bool {
+	inline public function equalsWithEpsilon(otherVector:Vector2, epsilon:Float = Tools.Epsilon):Bool {
 		return otherVector != null && Tools.WithinEpsilon(this.x, otherVector.x, epsilon) && Tools.WithinEpsilon(this.y, otherVector.y, epsilon);
 	}
 

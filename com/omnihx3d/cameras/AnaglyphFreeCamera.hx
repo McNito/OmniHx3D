@@ -2,7 +2,7 @@ package com.omnihx3d.cameras;
 
 import com.omnihx3d.math.Matrix;
 import com.omnihx3d.math.Vector3;
-import com.omnihx3d.tools.Tools;
+import com.omnihx3d.math.Tools;
 
 /**
  * ...

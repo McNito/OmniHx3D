@@ -1,7 +1,7 @@
 package com.omnihx3d.culling.octrees;
 
 import com.omnihx3d.math.Plane;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 import com.omnihx3d.math.Vector3;
 import com.omnihx3d.mesh.AbstractMesh;
 import com.omnihx3d.mesh.SubMesh;

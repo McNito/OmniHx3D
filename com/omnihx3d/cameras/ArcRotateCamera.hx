@@ -7,7 +7,7 @@ import com.omnihx3d.math.Vector2;
 import com.omnihx3d.math.Vector3;
 import com.omnihx3d.mesh.AbstractMesh;
 import com.omnihx3d.mesh.Mesh;
-import com.omnihx3d.tools.Tools;
+import com.omnihx3d.math.Tools;
 import com.omnihx3d.utils.Keycodes;
 
 
@@ -23,14 +23,17 @@ import com.omnihx3d.utils.Keycodes;
 	public var inertialRadiusOffset:Float = 0;
 	public var lowerAlphaLimit:Null<Float> = null;
 	public var upperAlphaLimit:Null<Float> = null;
-	public var lowerBetaLimit:Float = 0.01;
-	public var upperBetaLimit:Float = Math.PI;
+	public var lowerBetaLimit:Null<Float> = 0.01;
+	public var upperBetaLimit:Null<Float> = Math.PI;
 	public var lowerRadiusLimit:Null<Float> = null;
 	public var upperRadiusLimit:Null<Float> = null;
-	public var angularSensibility:Float = 1000.0;
+	public var angularSensibilityX:Float = 1000.0;
+	public var angularSensibilityY:Float = 1000.0;
 	public var wheelPrecision:Float = 3.0;
 	public var pinchPrecision:Float = 2.0;
-	public var panningSensibility:Float = 0.1;
+	public var panningSensibility:Float = 50;
+	public var inertialPanningX:Float = 0;
+	public var inertialPanningY:Float = 0;
 	
 	#if purejs
 	public var keysUp:Array<Int> = [38];
@@ -60,8 +63,8 @@ import com.omnihx3d.utils.Keycodes;
 	private var _onPointerMove:Dynamic;
 	private var _wheel:Dynamic;
 	private var _onMouseMove:Dynamic;
-	private var _onKeyDown:Dynamic;
-	private var _onKeyUp:Dynamic;
+	private var _onKeyDown:Int->Void = function(keycode:Int) { };
+	private var _onKeyUp:Int->Void = function(keycode:Int) { };
 	private var _onLostFocus:Void->Void;
 	//public var _reset:Void->Void;
 	private var _onGestureStart:Dynamic;
@@ -69,11 +72,11 @@ import com.omnihx3d.utils.Keycodes;
     private var _MSGestureHandler:Dynamic;
 	
 	// Panning
+	public var panningAxis:Vector3 = new Vector3(1, 1, 0);
 	private var _localDirection:Vector3;
 	private var _transformedDirection:Vector3;
 	private var _isRightClick:Bool = false;
 	private var _isCtrlPushed:Bool = false;
-	private var _lastPanningPosition:Vector2 = new Vector2(0, 0);
 
 	// Collisions
 	public var onCollide:AbstractMesh->Void;
@@ -88,7 +91,7 @@ import com.omnihx3d.utils.Keycodes;
 	private var _previousRadius:Float;
 	//due to async collision inspection
 	private var _collisionTriggered:Bool;
-		
+	
 	public var alpha:Float;
 	public var beta:Float;
 	public var radius:Float;
@@ -102,12 +105,12 @@ import com.omnihx3d.utils.Keycodes;
 		this.beta = beta;
 		this.radius = radius;
 		this.target = target != null ? (target.position != null ? target.position.clone() : target.clone()) : Vector3.Zero();
-				
+		
 		this.getViewMatrix();	
 	}
 
 	public function _getTargetPosition():Vector3 {
-		return this.target.position != null ? this.target.position : this.target;
+		return this.target.getAbsolutePosition != null ? this.target.getAbsolutePosition() : this.target;
 	}
 
 	// Cache
@@ -134,8 +137,9 @@ import com.omnihx3d.utils.Keycodes;
 
 	// Synchronized
 	override public function _isSynchronizedViewMatrix():Bool {
-		if (!super._isSynchronizedViewMatrix())
+		if (!super._isSynchronizedViewMatrix()) {
 			return false;
+		}
 			
 		return this._cache.target.equals(this._getTargetPosition())
 			&& this._cache.alpha == this.alpha
@@ -145,7 +149,7 @@ import com.omnihx3d.utils.Keycodes;
 	}
 
 	// Methods
-	override public function attachControl(?element:Dynamic, noPreventDefault:Bool = false, useCtrlForPanning:Bool = true) {
+	override public function attachControl(?element:Dynamic, noPreventDefault:Bool = false, useCtrlForPanning:Bool = true, enableKeyboard:Bool = true) {
 		#if purejs
 		var cacheSoloPointer:Dynamic; // cache pointer object for better perf on camera rotation
 		var previousPinchDistance:Float = 0.0;
@@ -167,9 +171,7 @@ import com.omnihx3d.utils.Keycodes;
 		#if purejs
 			this._onPointerDown = function(evt:Dynamic) {
 				// Manage panning
-				this._isRightClick = evt.button == 2 ? true : false;
-				this._lastPanningPosition.x = evt.clientX;
-				this._lastPanningPosition.y = evt.clientY;
+				this._isRightClick = evt.button == 2;
 				
 				// manage pointers
 				var _dummy = { dummy: 'dummy' };
@@ -208,30 +210,17 @@ import com.omnihx3d.utils.Keycodes;
 					
 					case 1: //normal camera rotation
 						if (this.panningSensibility != 0 && ((this._isCtrlPushed && useCtrlForPanning) || (!useCtrlForPanning && this._isRightClick))) {
-							if (this._localDirection == null) {
-								this._localDirection = Vector3.Zero();
-								this._transformedDirection = Vector3.Zero();
-							}
-							
-							var diffx = (evt.clientX - this._lastPanningPosition.x) * this.panningSensibility;
-							var diffy = (evt.clientY - this._lastPanningPosition.y) * this.panningSensibility;
-							
-							this._localDirection.copyFromFloats(-diffx, diffy, 0);
-							this._viewMatrix.invertToRef(this._cameraTransformMatrix);
-							Vector3.TransformNormalToRef(this._localDirection, this._cameraTransformMatrix, this._transformedDirection);
-							this.target.addInPlace(this._transformedDirection);
-							
-							this._lastPanningPosition.x = evt.clientX;
-							this._lastPanningPosition.y = evt.clientY;
-						} 
-						else {
-							var offsetX = evt.clientX - cacheSoloPointer.x;
-							var offsetY = evt.clientY - cacheSoloPointer.y;
-							this.inertialAlphaOffset -= offsetX / this.angularSensibility;
-							this.inertialBetaOffset -= offsetY / this.angularSensibility;
-							cacheSoloPointer.x = evt.clientX;
-							cacheSoloPointer.y = evt.clientY;
-						}
+							this.inertialPanningX += -(evt.clientX - cacheSoloPointer.x) / this.panningSensibility;
+                                this.inertialPanningY += (evt.clientY - cacheSoloPointer.y) / this.panningSensibility;
+                            } 
+							else {
+                                var offsetX = evt.clientX - cacheSoloPointer.x;
+                                var offsetY = evt.clientY - cacheSoloPointer.y;
+                                this.inertialAlphaOffset -= offsetX / this.angularSensibilityX;
+                                this.inertialBetaOffset -= offsetY / this.angularSensibilityY;
+                            }
+                            cacheSoloPointer.x = evt.clientX;
+                            cacheSoloPointer.y = evt.clientY;
 						
 					case 2: //pinch
 						//if (noPreventDefault) { evt.preventDefault(); } //if pinch gesture, could be usefull to force preventDefault to avoid html page scroll/zoom in some mobile browsers
@@ -247,7 +236,7 @@ import com.omnihx3d.utils.Keycodes;
 						}
 						
 						if (pinchSquaredDistance != previousPinchDistance) {
-							this.inertialRadiusOffset += (pinchSquaredDistance - previousPinchDistance) / (this.pinchPrecision * this.wheelPrecision * this.angularSensibility * direction);
+							this.inertialRadiusOffset += (pinchSquaredDistance - previousPinchDistance) / (this.pinchPrecision * this.wheelPrecision * this.angularSensibilityX * direction);
 							previousPinchDistance = pinchSquaredDistance;
 						}
 						
@@ -267,8 +256,8 @@ import com.omnihx3d.utils.Keycodes;
 				var offsetX = untyped evt.movementX || evt.mozMovementX || evt.webkitMovementX || evt.msMovementX || 0;
 				var offsetY = untyped evt.movementY || evt.mozMovementY || evt.webkitMovementY || evt.msMovementY || 0;
 				
-				this.inertialAlphaOffset -= offsetX / this.angularSensibility;
-				this.inertialBetaOffset -= offsetY / this.angularSensibility;
+				this.inertialAlphaOffset -= offsetX / this.angularSensibilityX;
+				this.inertialBetaOffset -= offsetY / this.angularSensibilityY;
 				
 				if (!noPreventDefault) {
 					evt.preventDefault();
@@ -321,8 +310,8 @@ import com.omnihx3d.utils.Keycodes;
                     offsetY = y - previousPosition.y;
                 }
 				
-				this.inertialAlphaOffset -= offsetX / this.angularSensibility;
-				this.inertialBetaOffset -= offsetY / this.angularSensibility;	
+				this.inertialAlphaOffset -= offsetX / this.angularSensibilityX;
+				this.inertialBetaOffset -= offsetY / this.angularSensibilityY;	
 				
 				previousPosition = {
 					x: x, 
@@ -342,31 +331,33 @@ import com.omnihx3d.utils.Keycodes;
 			
 		#end			
 			
-			this._onKeyDown = function(keycode:Int) {
-				if (this.keysUp.indexOf(keycode) != -1 ||
-					this.keysDown.indexOf(keycode) != -1 ||
-					this.keysLeft.indexOf(keycode) != -1 ||
-					this.keysRight.indexOf(keycode) != -1) {
-					var index = this._keys.indexOf(keycode);
-					
-					if (index == -1) {
-						this._keys.push(keycode);
-					}					
-				}
-			};
-			
-			this._onKeyUp = function(keycode:Int) {
-				if (this.keysUp.indexOf(keycode) != -1 ||
-					this.keysDown.indexOf(keycode) != -1 ||
-					this.keysLeft.indexOf(keycode) != -1 ||
-					this.keysRight.indexOf(keycode) != -1) {
-					var index = this._keys.indexOf(keycode);
-					
-					if (index >= 0) {
-						this._keys.splice(index, 1);
-					}					
-				}
-			};
+			if (enableKeyboard) {
+				this._onKeyDown = function(keycode:Int) {
+					if (this.keysUp.indexOf(keycode) != -1 ||
+						this.keysDown.indexOf(keycode) != -1 ||
+						this.keysLeft.indexOf(keycode) != -1 ||
+						this.keysRight.indexOf(keycode) != -1) {
+						var index = this._keys.indexOf(keycode);
+						
+						if (index == -1) {
+							this._keys.push(keycode);
+						}					
+					}
+				};
+				
+				this._onKeyUp = function(keycode:Int) {
+					if (this.keysUp.indexOf(keycode) != -1 ||
+						this.keysDown.indexOf(keycode) != -1 ||
+						this.keysLeft.indexOf(keycode) != -1 ||
+						this.keysRight.indexOf(keycode) != -1) {
+						var index = this._keys.indexOf(keycode);
+						
+						if (index >= 0) {
+							this._keys.splice(index, 1);
+						}					
+					}
+				};
+			}
 			
 			this._onLostFocus = function() {
 				this._keys = [];				
@@ -412,7 +403,7 @@ import com.omnihx3d.utils.Keycodes;
 		Engine.app.addEventListener('mousewheel', this._wheel, false);
 		Engine.app.addEventListener('DOMMouseScroll', this._wheel, false);
 				
-		Tools.RegisterTopRootEvents([
+		com.omnihx3d.tools.Tools.RegisterTopRootEvents([
 			{ name: "keydown", handler: this._onKeyDown },
 			{ name: "keyup", handler: this._onKeyUp },
 			{ name: "blur", handler: this._onLostFocus }
@@ -444,7 +435,7 @@ import com.omnihx3d.utils.Keycodes;
 		Engine.app.removeEventListener('mousewheel', this._wheel, false);
 		Engine.app.removeEventListener('DOMMouseScroll', this._wheel, false);
 				
-		Tools.UnregisterTopRootEvents([
+		com.omnihx3d.tools.Tools.UnregisterTopRootEvents([
 			{ name: "keydown", handler: this._onKeyDown },
 			{ name: "keyup", handler: this._onKeyUp },
 			{ name: "blur", handler: this._onLostFocus }
@@ -457,63 +448,115 @@ import com.omnihx3d.utils.Keycodes;
 		Engine.mouseMove.remove(_onMouseMove);
 		Engine.mouseWheel.remove(_wheel);
 		#end
-				
+		
 		this._attachedElement = null;
 		
 		if (this._reset != null) {
 			this._reset();
 		}
 	}
-
-	override public function _update() {
+	
+	override public function _checkInputs() {
+		//if (async) collision inspection was triggered, don't update the camera's position - until the collision callback was called.
+		if (this._collisionTriggered) {
+			return;
+		}
+		
 		// Keyboard
 		for (index in 0...this._keys.length) {
 			var keyCode = this._keys[index];
-			
 			if (this.keysLeft.indexOf(keyCode) != -1) {
 				this.inertialAlphaOffset -= 0.01;
-			} else if (this.keysUp.indexOf(keyCode) != -1) {
+			} 
+			else if (this.keysUp.indexOf(keyCode) != -1) {
 				this.inertialBetaOffset -= 0.01;
-			} else if (this.keysRight.indexOf(keyCode) != -1) {
+			} 
+			else if (this.keysRight.indexOf(keyCode) != -1) {
 				this.inertialAlphaOffset += 0.01;
-			} else if (this.keysDown.indexOf(keyCode) != -1) {
+			} 
+			else if (this.keysDown.indexOf(keyCode) != -1) {
 				this.inertialBetaOffset += 0.01;
 			}
-		}
+		}			
 		
 		// Inertia
 		if (this.inertialAlphaOffset != 0 || this.inertialBetaOffset != 0 || this.inertialRadiusOffset != 0) {
-			this.alpha += this.inertialAlphaOffset;
+			this.alpha += this.beta <= 0 ? -this.inertialAlphaOffset : this.inertialAlphaOffset;
 			this.beta += this.inertialBetaOffset;
 			this.radius -= this.inertialRadiusOffset;
-			
 			this.inertialAlphaOffset *= this.inertia;
 			this.inertialBetaOffset *= this.inertia;
 			this.inertialRadiusOffset *= this.inertia;
-			
-			if (Math.abs(this.inertialAlphaOffset) < Engine.Epsilon)
+			if (Math.abs(this.inertialAlphaOffset) < Tools.Epsilon) {
 				this.inertialAlphaOffset = 0;
-				
-			if (Math.abs(this.inertialBetaOffset) < Engine.Epsilon)
+			}
+			if (Math.abs(this.inertialBetaOffset) < Tools.Epsilon) {
 				this.inertialBetaOffset = 0;
-				
-			if (Math.abs(this.inertialRadiusOffset) < Engine.Epsilon)
+			}
+			if (Math.abs(this.inertialRadiusOffset) < Tools.Epsilon) {
 				this.inertialRadiusOffset = 0;
+			}
+		}
+		
+		// Panning inertia
+		if (this.inertialPanningX != 0 || this.inertialPanningY != 0) {
+			if (this._localDirection == null) {
+				this._localDirection = Vector3.Zero();
+				this._transformedDirection = Vector3.Zero();
+			}
+			
+			this.inertialPanningX *= this.inertia;
+			this.inertialPanningY *= this.inertia;
+			
+			if (Math.abs(this.inertialPanningX) < Tools.Epsilon) {
+				this.inertialPanningX = 0;
+			}
+			if (Math.abs(this.inertialPanningY) < Tools.Epsilon) {
+				this.inertialPanningY = 0;
+			}
+			
+			this._localDirection.copyFromFloats(this.inertialPanningX, this.inertialPanningY, 0);
+			this._viewMatrix.invertToRef(this._cameraTransformMatrix);
+			Vector3.TransformNormalToRef(this._localDirection, this._cameraTransformMatrix, this._transformedDirection);
+			this.target.addInPlace(this._transformedDirection);
 		}
 		
 		// Limits
+		this._checkLimits();
+		
+		super._checkInputs();
+	}
+	
+	private function _checkLimits() {
+		if (this.lowerBetaLimit == null) {
+			if (this.allowUpsideDown && this.beta > Math.PI) {
+				this.beta = this.beta - (2 * Math.PI);
+			}
+		} 
+		else {
+			if (this.beta < this.lowerBetaLimit) {
+				this.beta = this.lowerBetaLimit;
+			}
+		}
+		
+		if (this.upperBetaLimit == null) {
+			if (this.allowUpsideDown && this.beta < -Math.PI) {
+				this.beta = this.beta + (2 * Math.PI);
+			}
+		} 
+		else {
+			if (this.beta > this.upperBetaLimit) {
+				this.beta = this.upperBetaLimit;
+			}
+		}
+		
 		if (this.lowerAlphaLimit != null && this.alpha < this.lowerAlphaLimit) {
 			this.alpha = this.lowerAlphaLimit;
 		}
 		if (this.upperAlphaLimit != null && this.alpha > this.upperAlphaLimit) {
 			this.alpha = this.upperAlphaLimit;
 		}
-		if (this.beta < this.lowerBetaLimit) {
-			this.beta = this.lowerBetaLimit;
-		}
-		if (this.beta > this.upperBetaLimit) {
-			this.beta = this.upperBetaLimit;
-		}
+		
 		if (this.lowerRadiusLimit != null && this.radius < this.lowerRadiusLimit) {
 			this.radius = this.lowerRadiusLimit;
 		}
@@ -521,13 +564,9 @@ import com.omnihx3d.utils.Keycodes;
 			this.radius = this.upperRadiusLimit;
 		}
 	}
-
-	public function setPosition(position:Vector3) {
-		if (this.position.equals(position)) {
-            return;
-        }
-		
-		var radiusv3 = position.subtract(this._getTargetPosition());
+	
+	public function rebuildAnglesAndRadius() {
+		var radiusv3 = this.position.subtract(this._getTargetPosition());
 		this.radius = radiusv3.length();
 		
 		// Alpha
@@ -538,7 +577,27 @@ import com.omnihx3d.utils.Keycodes;
 		}
 		
 		// Beta
-		this.beta = Math.acos(radiusv3.y / this.radius);		
+		this.beta = Math.acos(radiusv3.y / this.radius);
+		
+		this._checkLimits();
+	}
+
+	public function setPosition(position:Vector3) {
+		if (this.position.equals(position)) {
+            return;
+        }
+		
+		this.position = position;
+		
+		this.rebuildAnglesAndRadius();
+	}
+	
+	override public function setTarget(target:Vector3) {
+		if (this.target.equals(target)) {
+			return;
+		}
+		this.target = target;
+		this.rebuildAnglesAndRadius();
 	}
 
 	override public function _getViewMatrix_default():Matrix {
@@ -547,41 +606,73 @@ import com.omnihx3d.utils.Keycodes;
 		var sina = Math.sin(this.alpha);
 		var cosb = Math.cos(this.beta);
 		var sinb = Math.sin(this.beta);
+		if (sinb == 0) {
+			sinb = 0.0001;
+		}
 		
 		var target = this._getTargetPosition();
 		
-		target.addToRef(new Vector3(this.radius * cosa * sinb, this.radius * cosb, this.radius * sina * sinb), this.position);
+		target.addToRef(new Vector3(this.radius * cosa * sinb, this.radius * cosb, this.radius * sina * sinb), this._newPosition);
 		
-		if (this.checkCollisions) {
+		if (this.getScene().collisionsEnabled && this.checkCollisions) {
 			this._collider.radius = this.collisionRadius;
-			this.position.subtractToRef(this._previousPosition, this._collisionVelocity);
+			this._newPosition.subtractToRef(this.position, this._collisionVelocity);
+			this._collisionTriggered = true;
+			this.getScene().collisionCoordinator.getNewPosition(this.position, this._collisionVelocity, this._collider, 3, null, this._onCollisionPositionChange, this.uniqueId);
+		} 
+		else {
+			this.position.copyFrom(this._newPosition);
 			
-			this.getScene()._getNewPosition(this._previousPosition, this._collisionVelocity, this._collider, 3, this._newPosition);
+			var up = this.upVector;
+			if (this.allowUpsideDown && this.beta < 0) {
+				up = up.clone();
+				up = up.negate();
+			}
 			
-			if (!this._newPosition.equalsWithEpsilon(this.position)) {
-				this.position.copyFrom(this._previousPosition);
-				
-				this.alpha = this._previousAlpha;
-				this.beta = this._previousBeta;
-				this.radius = this._previousRadius;
-				
-				if (this.onCollide != null) {
-					this.onCollide(this._collider.collidedMesh);
-				}
+			Matrix.LookAtLHToRef(this.position, target, up, this._viewMatrix);
+			this._viewMatrix.m[12] += this.targetScreenOffset.x;
+			this._viewMatrix.m[13] += this.targetScreenOffset.y;
+		}
+		
+		return this._viewMatrix;
+	}
+	
+	private function _onCollisionPositionChange(collisionId:Int, newPosition:Vector3, collidedMesh:AbstractMesh = null) {
+		if (this.getScene().workerCollisions && this.checkCollisions) {
+			newPosition.multiplyInPlace(this._collider.radius);
+		}
+		
+		if (collidedMesh != null) {
+			this._previousPosition.copyFrom(this.position);
+		} 
+		else {
+			this.setPosition(newPosition);
+			
+			if (this.onCollide != null) {
+				this.onCollide(collidedMesh);
 			}
 		}
 		
-		Matrix.LookAtLHToRef(this.position, target, this.upVector, this._viewMatrix);
+		// Recompute because of constraints
+		var cosa = Math.cos(this.alpha);
+		var sina = Math.sin(this.alpha);
+		var cosb = Math.cos(this.beta);
+		var sinb = Math.sin(this.beta);
+		var target = this._getTargetPosition();
+		target.addToRef(new Vector3(this.radius * cosa * sinb, this.radius * cosb, this.radius * sina * sinb), this._newPosition);
+		this.position.copyFrom(this._newPosition);
 		
-		this._previousAlpha = this.alpha;
-		this._previousBeta = this.beta;
-		this._previousRadius = this.radius;
-		this._previousPosition.copyFrom(this.position);
+		var up = this.upVector;
+		if (this.allowUpsideDown && this.beta < 0) {
+			up = up.clone();
+			up = up.negate();
+		}
 		
+		Matrix.LookAtLHToRef(this.position, target, up, this._viewMatrix);
 		this._viewMatrix.m[12] += this.targetScreenOffset.x;
 		this._viewMatrix.m[13] += this.targetScreenOffset.y;
-					
-		return this._viewMatrix;
+		
+		this._collisionTriggered = false;
 	}
 
 	public function zoomOn(?meshes:Array<AbstractMesh>, doNotUpdateMaxZ:Bool = false) {
@@ -614,6 +705,57 @@ import com.omnihx3d.utils.Keycodes;
 		if (!doNotUpdateMaxZ) {
             this.maxZ = distance * 2;
         }
+	}
+	
+	override public function createRigCamera(name:String, cameraIndex:Int):Camera {
+		switch (this.cameraRigMode) {
+			case Camera.RIG_MODE_STEREOSCOPIC_ANAGLYPH, 
+				 Camera.RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_PARALLEL,
+				 Camera.RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_CROSSEYED, 
+				 Camera.RIG_MODE_STEREOSCOPIC_OVERUNDER,
+				 Camera.RIG_MODE_VR:
+				var alphaShift = this._cameraRigParams.stereoHalfAngle * (cameraIndex == 0 ? 1 : -1);
+				return new ArcRotateCamera(name, this.alpha + alphaShift, this.beta, this.radius, this.target, this.getScene());
+		}
+		
+		return null;
+	}
+	
+	override public function _updateRigCameras() {
+		switch (this.cameraRigMode) {
+			case Camera.RIG_MODE_STEREOSCOPIC_ANAGLYPH,
+				 Camera.RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_PARALLEL,
+				 Camera.RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_CROSSEYED,
+				 Camera.RIG_MODE_STEREOSCOPIC_OVERUNDER, Camera.RIG_MODE_VR:
+				var camLeft:ArcRotateCamera = cast this._rigCameras[0];
+				var camRight:ArcRotateCamera = cast this._rigCameras[1];
+				camLeft.alpha = this.alpha - this._cameraRigParams.stereoHalfAngle;
+				camRight.alpha = this.alpha + this._cameraRigParams.stereoHalfAngle;
+				camLeft.beta = camRight.beta = this.beta;
+				camLeft.radius = camRight.radius = this.radius;
+		}
+		
+		super._updateRigCameras();
+	}
+	
+	override public function serialize():Dynamic {
+		var serializationObject = super.serialize();
+		
+		if (Std.is(this.target, Vector3)) {
+			serializationObject.target = this.target.asArray();
+		}
+		
+		if (this.target != null && this.target.id != null) {
+			serializationObject.lockedTargetId = this.target.id;
+		}
+		
+		serializationObject.checkCollisions = this.checkCollisions;
+		
+		serializationObject.alpha = this.alpha;
+		serializationObject.beta = this.beta;
+		serializationObject.radius = this.radius;
+		
+		return serializationObject;
 	}
 	
 }

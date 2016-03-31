@@ -1,5 +1,4 @@
 package com.omnihx3d.math;
-import com.omnihx3d.tools.Tools;
 
 /**
  * ...
@@ -15,7 +14,7 @@ import com.omnihx3d.tools.Tools;
 	public var b:Float;
 	
 	
-	public function new(r:Float = 0, g:Float = 0, b:Float = 0) {
+	inline public function new(r:Float = 0, g:Float = 0, b:Float = 0) {
 		this.r = r;
 		this.g = g;
 		this.b = b;

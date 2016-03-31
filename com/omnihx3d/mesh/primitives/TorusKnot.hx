@@ -1,5 +1,7 @@
 package com.omnihx3d.mesh.primitives;
 
+import com.omnihx3d.tools.Tags;
+
 /**
  * ...
  * @author Krtolica Vujadin
@@ -36,5 +38,18 @@ package com.omnihx3d.mesh.primitives;
 	override public function copy(id:String):Geometry {
 		return new TorusKnot(id, this.getScene(), this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, this.canBeRegenerated(), null, this.side);
 	}
+	
+	public static function Parse(parsedTorusKnot:Dynamic, scene:Scene):TorusKnot {
+        if (Geometry.Parse(parsedTorusKnot, scene) == null) {
+            return null; // null since geometry could be something else than a torusKnot...
+        }
+		
+        var torusKnot = new TorusKnot(parsedTorusKnot.id, scene, parsedTorusKnot.radius, parsedTorusKnot.tube, parsedTorusKnot.radialSegments, parsedTorusKnot.tubularSegments, parsedTorusKnot.p, parsedTorusKnot.q, parsedTorusKnot.canBeRegenerated, null);
+        Tags.AddTagsTo(torusKnot, parsedTorusKnot.tags);
+		
+        scene.pushGeometry(torusKnot, true);
+		
+        return torusKnot;
+    }
 	
 }

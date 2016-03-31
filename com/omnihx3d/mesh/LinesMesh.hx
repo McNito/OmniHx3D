@@ -5,7 +5,7 @@ import com.omnihx3d.materials.Effect;
 import com.omnihx3d.materials.ShaderMaterial;
 import com.omnihx3d.materials.Material;
 import com.omnihx3d.math.Color3;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 
 /**
  * ...

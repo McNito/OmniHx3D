@@ -18,7 +18,7 @@ import com.omnihx3d.math.Vector3;
 	private var _savedViewMatrix:Matrix;
 	
 
-	public function new(name:String, size:Int, scene:Scene, ?generateMipMaps:Bool) {
+	public function new(name:String, size:Int, scene:Scene, generateMipMaps:Bool = false) {
 		super(name, size, scene, generateMipMaps, true);
 		
 		this.onBeforeRender = function(val:Int = 0) {
@@ -58,6 +58,18 @@ import com.omnihx3d.math.Vector3;
 		newTexture.renderList = this.renderList.slice(0);
 		
 		return newTexture;
+	}
+	
+	override public function serialize():Dynamic {
+		if (this.name == null) {
+			return null;
+		}
+		
+		var serializationObject = super.serialize();
+		
+		serializationObject.mirrorPlane = this.mirrorPlane.asArray();
+		
+		return serializationObject;
 	}
 	
 }

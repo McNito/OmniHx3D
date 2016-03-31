@@ -3,7 +3,7 @@ package com.omnihx3d.cameras;
 import com.omnihx3d.materials.Effect;
 import com.omnihx3d.postprocess.AnaglyphPostProcess;
 import com.omnihx3d.postprocess.PassPostProcess;
-import com.omnihx3d.tools.Tools;
+import com.omnihx3d.math.Tools;
 
 /**
  * ...

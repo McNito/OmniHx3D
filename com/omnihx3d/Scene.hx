@@ -5,7 +5,9 @@ import com.omnihx3d.actions.ActionManager;
 import com.omnihx3d.actions.ActionEvent;
 import com.omnihx3d.animations.Animatable;
 import com.omnihx3d.animations.Animation;
+import com.omnihx3d.animations.IAnimatable;
 import com.omnihx3d.bones.Skeleton;
+import com.omnihx3d.bones.Bone;
 import com.omnihx3d.cameras.FreeCamera;
 import com.omnihx3d.collisions.Collider;
 import com.omnihx3d.collisions.PickingInfo;
@@ -24,8 +26,9 @@ import com.omnihx3d.math.Color3;
 import com.omnihx3d.cameras.Camera;
 import com.omnihx3d.math.Matrix;
 import com.omnihx3d.math.Plane;
-import com.omnihx3d.math.Ray;
+import com.omnihx3d.culling.Ray;
 import com.omnihx3d.math.Vector3;
+import com.omnihx3d.math.Vector2;
 import com.omnihx3d.math.Frustum;
 import com.omnihx3d.mesh.AbstractMesh;
 import com.omnihx3d.mesh.Geometry;
@@ -50,13 +53,21 @@ import com.omnihx3d.sprites.SpriteManager;
 import com.omnihx3d.sprites.Sprite;
 import com.omnihx3d.tools.SmartArray;
 import com.omnihx3d.tools.Tools;
+import com.omnihx3d.tools.Observable;
+import com.omnihx3d.tools.Observer;
+import com.omnihx3d.tools.EventState;
+
+#if (purejs || js)
+import com.omnihx3d.audio.*;
+#end
 
 /**
  * ...
  * @author Krtolica Vujadin
+ * @author 0xFireball
  */
 
-@:expose('BABYLON.Scene') class Scene {
+@:expose('BABYLON.Scene') class Scene implements IAnimatable {
 	
 	// Statics
 	public static var FOGMODE_NONE:Int = 0;
@@ -69,32 +80,184 @@ import com.omnihx3d.tools.Tools;
 
 	// Members
 	public var autoClear:Bool = true;
-	public var clearColor:Color3 = new Color3(0.2, 0.2, 0.2);
+	public var clearColor:Color3 = new Color3(0.2, 0.2, 0.3);
 	public var ambientColor:Color3 = new Color3(0, 0, 0);
-	public var beforeRender:Void->Void;
-	public var afterRender:Void->Void;
-	public var onDispose:Void->Void;
-	public var beforeCameraRender:Camera->Void;
-	public var afterCameraRender:Camera->Void;
+	
 	public var forceWireframe:Bool = false;
 	public var forcePointsCloud:Bool = false;
 	public var forceShowBoundingBoxes:Bool = false;
 	public var clipPlane:Plane;
 	public var animationsEnabled:Bool = true;
 	public var constantlyUpdateMeshUnderPointer:Bool = false;
+	
+	// Events
+
+	/**
+	* An event triggered when the scene is disposed.
+	* @type {BABYLON.Observable}
+	*/
+	public var onDisposeObservable:Observable<Scene> = new Observable<Scene>();
+
+	public var onDispose(never, set):Scene->Null<EventState>->Void;
+	private var _onDisposeObserver:Observer<Scene>;
+	private function set_onDispose(callback:Scene->Null<EventState>->Void):Scene->Null<EventState>->Void {
+		if (this._onDisposeObserver != null) {
+			this.onDisposeObservable.remove(this._onDisposeObserver);
+		}
+		
+		this._onDisposeObserver = this.onDisposeObservable.add(callback);
+		
+		return callback;
+	}
+
+	/**
+	* An event triggered before rendering the scene
+	* @type {BABYLON.Observable}
+	*/
+	public var onBeforeRenderObservable:Observable<Scene> = new Observable<Scene>();
+	
+	public var beforeRender(never, set):Scene->Null<EventState>->Void;
+	private var _onBeforeRenderObserver:Observer<Scene>;
+	private function set_beforeRender(callback:Scene->Null<EventState>->Void):Scene->Null<EventState>->Void {
+		if (this._onBeforeRenderObserver != null) {
+			this.onBeforeRenderObservable.remove(this._onBeforeRenderObserver);
+		}
+		
+		this._onBeforeRenderObserver = this.onBeforeRenderObservable.add(callback);
+		
+		return callback;
+	}
+
+	/**
+	* An event triggered after rendering the scene
+	* @type {BABYLON.Observable}
+	*/
+	public var onAfterRenderObservable:Observable<Scene> = new Observable<Scene>();
+
+	public var afterRender(never, set):Scene->Null<EventState>->Void;
+	private var _onAfterRenderObserver:Observer<Scene>;
+	private function set_afterRender(callback:Scene->Null<EventState>->Void):Scene->Null<EventState>->Void {
+		if (this._onAfterRenderObserver != null) {
+			this.onAfterRenderObservable.remove(this._onAfterRenderObserver);
+		}
+		
+		this._onAfterRenderObserver = this.onAfterRenderObservable.add(callback);
+		
+		return callback;
+	}
+
+	/**
+	* An event triggered when the scene is ready
+	* @type {BABYLON.Observable}
+	*/
+	public var onReadyObservable:Observable<Scene> = new Observable<Scene>();
+
+	/**
+	* An event triggered before rendering a camera
+	* @type {BABYLON.Observable}
+	*/
+	public var onBeforeCameraRenderObservable:Observable<Camera> = new Observable<Camera>();
+
+	public var beforeCameraRender(never, set):Camera->Null<EventState>->Void;
+	private var _onBeforeCameraRenderObserver:Observer<Camera>;
+	private function set_beforeCameraRender(callback:Camera->Null<EventState>->Void):Camera->Null<EventState>->Void {
+		if (this._onBeforeCameraRenderObserver != null) {
+			this.onBeforeCameraRenderObservable.remove(this._onBeforeCameraRenderObserver);
+		}
+		
+		this._onBeforeCameraRenderObserver = this.onBeforeCameraRenderObservable.add(callback);
+		
+		return callback;
+	}
+
+	/**
+	* An event triggered after rendering a camera
+	* @type {BABYLON.Observable}
+	*/
+	public var onAfterCameraRenderObservable:Observable<Camera> = new Observable<Camera>();
+	
+	public var afterCameraRender(never, set):Camera->EventState->Void;
+	private var _onAfterCameraRenderObserver:Observer<Camera>;
+	private function set_afterCameraRender(callback:Camera->EventState->Void) {
+		if (this._onAfterCameraRenderObserver != null) {
+			this.onAfterCameraRenderObservable.remove(this._onAfterCameraRenderObserver);
+		}
+		
+		this._onAfterCameraRenderObserver = this.onAfterCameraRenderObservable.add(callback);
+		
+		return callback;
+	}
+
+	/**
+	* An event triggered when a camera is created
+	* @type {BABYLON.Observable}
+	*/
+	public var onNewCameraAddedObservable:Observable<Camera> = new Observable<Camera>();
+
+	/**
+	* An event triggered when a camera is removed
+	* @type {BABYLON.Observable}
+	*/
+	public var onCameraRemovedObservable:Observable<Camera> = new Observable<Camera>();
+
+	/**
+	* An event triggered when a light is created
+	* @type {BABYLON.Observable}
+	*/
+	public var onNewLightAddedObservable:Observable<Light> = new Observable<Light>();
+
+	/**
+	* An event triggered when a light is removed
+	* @type {BABYLON.Observable}
+	*/
+	public var onLightRemovedObservable:Observable<Light> = new Observable<Light>();
+
+	/**
+	* An event triggered when a geometry is created
+	* @type {BABYLON.Observable}
+	*/
+	public var onNewGeometryAddedObservable:Observable<Geometry> = new Observable<Geometry>();
+
+	/**
+	* An event triggered when a geometry is removed
+	* @type {BABYLON.Observable}
+	*/
+	public var onGeometryRemovedObservable:Observable<Geometry> = new Observable<Geometry>();
+
+	/**
+	* An event triggered when a mesh is created
+	* @type {BABYLON.Observable}
+	*/
+	public var onNewMeshAddedObservable:Observable<AbstractMesh> = new Observable<AbstractMesh>();
+
+	/**
+	* An event triggered when a mesh is removed
+	* @type {BABYLON.Observable}
+	*/
+	public var onMeshRemovedObservable:Observable<AbstractMesh> = new Observable<AbstractMesh>();
+	
+	// Animations
+	public var animations:Array<Animation> = [];
 
 	// Pointers
-	public var _onPointerMove:Dynamic;	// MouseEvent->Void
-	public var onPointerMove:Dynamic;	// MouseEvent->PickingInfo->Void
-	public var _onPointerDown:Dynamic;	// MouseEvent->Void
-	public var onPointerDown:Dynamic;   // MouseEvent->PickingInfo->Void
-	public var _onPointerUp:Dynamic;	// MouseEvent->Void
-	public var onPointerUp:Dynamic;		// MouseEvent->PickingInfo->Void
-	public var _onMouseMoveRelative:Dynamic;		// MouseEvent->Void
+	public var pointerDownPredicate:Mesh->AbstractMesh->Bool;
+	public var pointerUpPredicate:Mesh->AbstractMesh->Bool;
+	public var pointerMovePredicate:Mesh->AbstractMesh->Bool;
+	private var _onPointerMove:Int->Int->Void;
+	private var _onPointerDown:Int->Int->Int->Void;
+	private var _onPointerUp:Int->Int->Int->Void;
+	public var onPointerMove:PickingInfo->Void;
+	public var onPointerDown:Int->Int->Int->PickingInfo->Void;
+	public var onPointerUp:Int->Int->Int->PickingInfo->Void;
+	public var onPointerPick:PickingInfo->Void;
 	public var cameraToUseForPointers:Camera = null; // Define this parameter if you are using multiple cameras and you want to specify which one should be used for pointer position
 	private var _pointerX:Int;
 	private var _pointerY:Int;
+	private var _unTranslatedPointerX:Int;
+	private var _unTranslatedPointerY:Int;
 	private var _meshUnderPointer:AbstractMesh; 
+	private var _startingPointerPosition:Vector2 = new Vector2(0, 0);
+	private var _startingPointerTime:Float = 0;
 	
 	// Mirror
     public var _mirroredCameraPosition:Vector3;
@@ -104,36 +267,55 @@ import com.omnihx3d.tools.Tools;
 	private var _onKeyUp:Dynamic;		// Event->Void
 
 	// Fog
+	/**
+	* is fog enabled on this scene.
+	* @type {boolean}
+	*/
 	public var fogEnabled:Bool = true;
 	public var fogMode:Int = Scene.FOGMODE_NONE;
-	public var fogColor:Color3 = new Color3(0.2, 0.2, 0.2);
+	public var fogColor:Color3 = new Color3(0.2, 0.2, 0.3);
 	public var fogDensity:Float = 0.1;
 	public var fogStart:Float = 0;
 	public var fogEnd:Float = 1000.0;
 
 	// Lights
+	/**
+	* is shadow enabled on this scene.
+	* @type {boolean}
+	*/
 	public var shadowsEnabled:Bool = true;
+	/**
+	* is light enabled on this scene.
+	* @type {boolean}
+	*/
 	public var lightsEnabled:Bool = true;
+	/**
+	* All of the lights added to this scene.
+	* @see BABYLON.Light
+	* @type {BABYLON.Light[]}
+	*/
 	public var lights:Array<Light> = [];
-	public var onNewLightAdded:Light->Int->Scene->Void;
-    public var onLightRemoved:Light->Void;
 
 	// Cameras
+	/**
+	* All of the cameras added to this scene.
+	* @see BABYLON.Camera
+	* @type {BABYLON.Camera[]}
+	*/
 	public var cameras:Array<Camera> = [];
-	public var onNewCameraAdded:Camera->Int->Scene->Void;
-	public var onCameraRemoved:Camera->Void;
 	public var activeCameras:Array<Camera> = [];
 	public var activeCamera:Camera;
 
 	// Meshes
+	/**
+	* All of the (abstract) meshes added to this scene.
+	* @see BABYLON.AbstractMesh
+	* @type {BABYLON.AbstractMesh[]}
+	*/
 	public var meshes:Array<AbstractMesh> = [];
-	public var onNewMeshAdded:AbstractMesh->Int->Scene->Void;
-    public var onMeshRemoved:AbstractMesh->Void;
 
 	// Geometries
 	private var _geometries:Array<Geometry> = [];
-	public var onGeometryAdded:Geometry->Void;
-    public var onGeometryRemoved:Geometry->Void;
 
 	public var materials:Array<Material> = [];
 	public var multiMaterials:Array<MultiMaterial> = [];
@@ -163,8 +345,7 @@ import com.omnihx3d.tools.Tools;
 	public var lensFlareSystems:Array<LensFlareSystem> = [];
 	
 	// Collisions
-	public var collisionsEnabled:Bool = true;
-	
+	public var collisionsEnabled:Bool = true;	
 	private var _workerCollisions:Bool = false;
 	public var workerCollisions(get, set):Bool;
 	private function set_workerCollisions(enabled:Bool):Bool {		
@@ -203,7 +384,7 @@ import com.omnihx3d.tools.Tools;
 	public var customRenderTargets:Array<RenderTargetTexture> = [];
 
 	// Delay loading
-	public var useDelayedTextureLoading:Bool;
+	public var useDelayedTextureLoading:Bool = false;
 
 	// Imported meshes
 	public var importedMeshesFiles:Array<String> = [];
@@ -216,13 +397,25 @@ import com.omnihx3d.tools.Tools;
 	public var database:Dynamic; //ANY
 
 	// Actions
+	/**
+	 * This scene's action manager
+	 * @type {BABYLON.ActionManager}
+	 */
 	public var actionManager:ActionManager;
 	public var _actionManagers:Array<ActionManager> = [];
-	private var _meshesForIntersections:SmartArray<AbstractMesh> = new SmartArray<AbstractMesh>(256);// new SmartArray<AbstractMesh>(256);
+	private var _meshesForIntersections:SmartArray<AbstractMesh> = new SmartArray<AbstractMesh>(256);
 
 	// Procedural textures
 	public var proceduralTexturesEnabled:Bool = true;
 	public var _proceduralTextures:Array<ProceduralTexture> = [];
+	
+	#if (purejs || js)
+	// Sound Tracks
+	public var mainSoundTrack: SoundTrack;
+    public var soundTracks = new Array<SoundTrack>();
+	private var _audioEnabled:Bool = true;
+	private var _headphone:Bool = false;
+	#end
 	
 	//Simplification Queue
 	public var simplificationQueue:SimplificationQueue;
@@ -244,21 +437,19 @@ import com.omnihx3d.tools.Tools;
 
 	private var _renderId:Int = 0;
 	private var _executeWhenReadyTimeoutId:Int = -1;
+	private var _intermediateRendering:Bool = false;
 
-	public var _toBeDisposed:SmartArray<IDisposable> = new SmartArray<IDisposable>(256);// SmartArray<IDisposable> = new SmartArray<IDisposable>(256);
+	public var _toBeDisposed:SmartArray<IDisposable> = new SmartArray<IDisposable>(256);
 
-	private var _onReadyCallbacks:Array<Void->Void> = [];
 	private var _pendingData:Array<Dynamic> = [];//ANY
 
-	private var _onBeforeRenderCallbacks:Array<Void->Void> = [];
-	private var _onAfterRenderCallbacks:Array<Void->Void> = [];
-
-	private var _activeMeshes:SmartArray<Mesh> = new SmartArray<Mesh>(256);				
+	private var _activeMeshes:SmartArray<AbstractMesh> = new SmartArray<AbstractMesh>(256);				
 	private var _processedMaterials:SmartArray<Material> = new SmartArray<Material>(256);		
 	private var _renderTargets:SmartArray<RenderTargetTexture> = new SmartArray<RenderTargetTexture>(256);			
 	public var _activeParticleSystems:SmartArray<ParticleSystem> = new SmartArray<ParticleSystem>(256);		
 	private var _activeSkeletons:SmartArray<Skeleton> = new SmartArray<Skeleton>(32);			
-	private var _softwareSkinnedMeshes:SmartArray<Mesh> = new SmartArray<Mesh>(32);		
+	private var _softwareSkinnedMeshes:SmartArray<Mesh> = new SmartArray<Mesh>(32);	
+	@:allow(com.omnihx3d.bones.Skeleton) 
 	private var _activeBones:Int = 0;
 
 	private var _renderingManager:RenderingManager;
@@ -275,9 +466,6 @@ import com.omnihx3d.tools.Tools;
 	private var _edgesRenderers:SmartArray<EdgesRenderer> = new SmartArray<EdgesRenderer>(16);// new SmartArray<EdgesRenderer>(16);
 	private var _boundingBoxRenderer:BoundingBoxRenderer;
 	private var _outlineRenderer:OutlineRenderer;
-	private var _depthRenderer:DepthRenderer;
-	
-	private var _uniqueIdCounter:Int = 0;
 
 	private var _viewMatrix:Matrix;
 	private var _projectionMatrix:Matrix;
@@ -286,8 +474,16 @@ import com.omnihx3d.tools.Tools;
 	public var _selectionOctree:Octree<AbstractMesh>;
 
 	private var _pointerOverMesh:AbstractMesh;
+	private var _pointerOverSprite:Sprite;
 	
 	//private var _debugLayer:DebugLayer;
+	
+	private var _depthRenderer:DepthRenderer;
+	
+	private var _uniqueIdCounter:Int = 0;
+	
+	private var _pickedDownMesh:AbstractMesh;
+	private var _pickedDownSprite:Sprite;
 	
 
 	public function new(engine:Engine) {
@@ -310,6 +506,10 @@ import com.omnihx3d.tools.Tools;
 		
 		//this._debugLayer = new DebugLayer(this);
 		
+		#if (purejs || js)
+		this.mainSoundTrack = new SoundTrack(this, { mainTrack: true });
+		#end
+		
 		//simplification queue
 		this.simplificationQueue = new SimplificationQueue();
 		
@@ -324,17 +524,29 @@ import com.omnihx3d.tools.Tools;
 		#end
 	}
 
-	// Properties 
+	// Properties
+	/**
+	 * The mesh that is currently under the pointer.
+	 * @return {BABYLON.AbstractMesh} mesh under the pointer/mouse cursor or null if none.
+	 */
 	public var meshUnderPointer(get, never):AbstractMesh;
 	private function get_meshUnderPointer():AbstractMesh {
 		return this._meshUnderPointer;
 	}
 
+	/**
+	 * Current on-screen X position of the pointer
+	 * @return {number} X position of the pointer
+	 */
 	public var pointerX(get, never):Float;
 	private function get_pointerX():Float {
 		return this._pointerX;
 	}
 
+	/**
+	 * Current on-screen Y position of the pointer
+	 * @return {number} Y position of the pointer
+	 */
 	public var pointerY(get, never):Float;
 	private function get_pointerY():Float {
 		return this._pointerY;
@@ -369,8 +581,126 @@ import com.omnihx3d.tools.Tools;
 	}
 	
 	inline public function getActiveBones():Int {
-        return this._activeBones;
+		return this._activeBones;
+	}
+	
+    // Audio
+    #if (purejs || js)
+    private function _updateAudioParameters() {
+		if (!this._audioEnabled || (this.mainSoundTrack.soundCollection.length == 0 && this.soundTracks.length == 1)) {
+			return;
+		}
+		
+		var listeningCamera: Camera;
+		var audioEngine = this.getEngine().audioEngine;
+		
+		if (this.activeCameras.length > 0) {
+			listeningCamera = this.activeCameras[0];
+		} 
+		else {
+			listeningCamera = this.activeCamera;
+		}
+		
+		if (listeningCamera != null && audioEngine.canUseWebAudio) {
+			audioEngine.audioContext.listener.setPosition(listeningCamera.position.x, listeningCamera.position.y, listeningCamera.position.z);
+			var mat = Matrix.Invert(listeningCamera.getViewMatrix());
+			var cameraDirection = Vector3.TransformNormal(new Vector3(0, 0, -1), mat);
+			cameraDirection.normalize();
+			audioEngine.audioContext.listener.setOrientation(cameraDirection.x, cameraDirection.y, cameraDirection.z, 0, 1, 0);
+			var i:Int;
+			for (i in 0...this.mainSoundTrack.soundCollection.length) {
+				var sound = this.mainSoundTrack.soundCollection[i];
+				if (sound.useCustomAttenuation) {
+					sound.updateDistanceFromListener();
+				}
+			}
+			for (i in 0...this.soundTracks.length) {
+				for (j in 0...this.soundTracks[i].soundCollection.length) {
+					var sound = this.soundTracks[i].soundCollection[j];
+					if (sound.useCustomAttenuation) {
+						sound.updateDistanceFromListener();
+					}
+				}
+			}
+		}
+	}
+
+    public function get_audioEnabled(): Bool {
+     	return this._audioEnabled;
     }
+
+    public function set_audioEnabled(value: Bool) {
+     	this._audioEnabled = value;
+     	if (this._audioEnabled  ) {
+     		if (this._audioEnabled) {
+     			this._enableAudio();
+     		}
+     		else {
+     			this._disableAudio();
+     		}
+     	}
+    }
+
+    private function _disableAudio() {
+     	var i:Int;
+     	for (i in 0...this.mainSoundTrack.soundCollection.length) {
+     		this.mainSoundTrack.soundCollection[i].pause();
+     	}
+     	for (i in 0...this.soundTracks.length) {
+     		for (j in 0...this.soundTracks[i].soundCollection.length) {
+     			this.soundTracks[i].soundCollection[j].pause();
+     		}
+     	}
+    }
+
+    private function _enableAudio() {
+     	var i:Int;
+     	for (i in 0...this.mainSoundTrack.soundCollection.length) {
+     		if (this.mainSoundTrack.soundCollection[i].isPaused) {
+     			this.mainSoundTrack.soundCollection[i].play();
+     		}
+     	}
+     	for (i in 0...this.soundTracks.length) {
+     		for (j in 0...this.soundTracks[i].soundCollection.length) {
+     			if (this.soundTracks[i].soundCollection[j].isPaused) {
+     				this.soundTracks[i].soundCollection[j].play();
+     			}
+     		}
+     	}
+    }
+	
+    public function get_headphone(): Bool {
+     	return this._headphone;
+    }
+	
+    public function set_headphone(value: Bool) {
+     	this._headphone = value;
+     	if (this._audioEnabled) {
+     		if (this._headphone) {
+     			this._switchAudioModeForHeadphones();
+     		}
+     		else {
+     			this._switchAudioModeForNormalSpeakers();
+     		}
+     	}
+    }
+	
+    private function _switchAudioModeForHeadphones() {
+     	this.mainSoundTrack.switchPanningModelToHRTF();
+		
+     	for (i in 0...this.soundTracks.length) {
+     		this.soundTracks[i].switchPanningModelToHRTF();
+     	}
+    }
+
+    private function _switchAudioModeForNormalSpeakers() {
+     	this.mainSoundTrack.switchPanningModelToEqualPower();
+		
+     	for (i in 0...this.soundTracks.length) {
+     		this.soundTracks[i].switchPanningModelToEqualPower();
+     	}
+    }
+    #end
 
 	// Stats
 	inline public function getLastFrameDuration():Float {
@@ -381,7 +711,7 @@ import com.omnihx3d.tools.Tools;
 		return this._evaluateActiveMeshesDuration;
 	}
 
-	inline public function getActiveMeshes():SmartArray<Mesh> {
+	inline public function getActiveMeshes():SmartArray<AbstractMesh> {
 		return this._activeMeshes;
 	}
 
@@ -413,11 +743,12 @@ import com.omnihx3d.tools.Tools;
 		this._renderId++;
 	}
 
-	inline private function _updatePointerPosition(x:Int, y:Int) {
-		/*var canvasRect = this._engine.getRenderingCanvasClientRect();*/
+	inline private function _updatePointerPosition(x:Int, y:Int) {		
+		this._pointerX = x;
+		this._pointerY = y;
 		
-		this._pointerX = x;// evt.clientX - canvasRect.left;
-		this._pointerY = y;// evt.clientY - canvasRect.top;
+		this._unTranslatedPointerX = this._pointerX;
+		this._unTranslatedPointerY = this._pointerY;
 		
 		if (this.cameraToUseForPointers != null) {
 			this._pointerX = this._pointerX - Std.int(this.cameraToUseForPointers.viewport.x) * this._engine.getRenderWidth();
@@ -432,11 +763,15 @@ import com.omnihx3d.tools.Tools;
 		};
 		 
 		this._onPointerMove = function(x:Int, y:Int) {
+			if (this.cameraToUseForPointers == null && this.activeCamera == null) {
+                return;
+            }
+			
 			//var canvas = this._engine.getRenderingCanvas();
 			
 			this._updatePointerPosition(x, y);
 			
-			var pickResult:PickingInfo = this.pick(this._pointerX, this._pointerY,
+			var pickResult:PickingInfo = this.pick(this._unTranslatedPointerX, this._unTranslatedPointerY,
 				function(mesh:AbstractMesh):Bool { 
 					return mesh.isPickable && mesh.isVisible && mesh.isReady() && (this.constantlyUpdateMeshUnderPointer || mesh.actionManager != null); 
 				},
@@ -444,24 +779,31 @@ import com.omnihx3d.tools.Tools;
 				this.cameraToUseForPointers);
 				
 			if (pickResult.hit  && pickResult.pickedMesh != null) {
-				this._meshUnderPointer = pickResult.pickedMesh;
+				this.setPointerOverSprite(null);
 				
 				this.setPointerOverMesh(pickResult.pickedMesh);
-				//canvas.style.cursor = "pointer";
+				
+				/*if (this._pointerOverMesh.actionManager != null && this._pointerOverMesh.actionManager.hasPointerTriggers) {
+					canvas.style.cursor = "pointer";
+				} 
+				else {
+					canvas.style.cursor = "";
+				}*/
 			} 
 			else {
-				// Sprites
+				this.setPointerOverMesh(null);
 				
-				pickResult = this.pickSprite(this._pointerX, this._pointerY, spritePredicate, false, this.cameraToUseForPointers);
+				// Sprites				
+				pickResult = this.pickSprite(this._unTranslatedPointerX, this._unTranslatedPointerY, spritePredicate, false, this.cameraToUseForPointers);
 				
 				if (pickResult.hit && pickResult.pickedSprite != null) {
 					//canvas.style.cursor = "pointer";
+					this.setPointerOverSprite(pickResult.pickedSprite);
 				} 
 				else {
 					// Restore pointer
-					this.setPointerOverMesh(null);
+					this.setPointerOverSprite(null);
 					//canvas.style.cursor = "";
-					this._meshUnderPointer = null;
 				}
 			}
 			
@@ -471,34 +813,62 @@ import com.omnihx3d.tools.Tools;
 		};
 		
 		this._onPointerDown = function(x:Int, y:Int, button:Int) {
+			if (this.cameraToUseForPointers == null && this.activeCamera == null) {
+                return;
+            }
 			
 			this._updatePointerPosition(x, y);
+			this._startingPointerPosition.x = this._pointerX;
+			this._startingPointerPosition.y = this._pointerY;
+			this._startingPointerTime = Date.now().getTime();
 			
 			var predicate = null;
 			
-			if (this.onPointerDown == null) {
+			// Meshes
+			if (this.onPointerDown == null && this.onPointerPick != null) {
 				predicate = function(mesh:AbstractMesh):Bool {
-					return mesh.isPickable && mesh.isVisible && mesh.isReady() && mesh.actionManager != null && mesh.actionManager.hasPickTriggers;
+					return mesh.isPickable && mesh.isVisible && mesh.isReady() && mesh.actionManager != null && mesh.actionManager.hasPointerTriggers;
 				};
 			}
 			
-			var pickResult:PickingInfo = this.pick(this._pointerX, this._pointerY, predicate, false, this.cameraToUseForPointers);
+			var pickResult:PickingInfo = this.pick(this._unTranslatedPointerX, this._unTranslatedPointerY, predicate, false, this.cameraToUseForPointers);
 			
-			if (pickResult.hit) {
+			if (pickResult.hit && pickResult.pickedMesh != null) {
 				if (pickResult.pickedMesh.actionManager != null) {
-					switch (button) {
-						case 0:
-							pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnLeftPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+					this._pickedDownMesh = pickResult.pickedMesh;
+					if (pickResult.pickedMesh.actionManager.hasPickTriggers) {
+						switch (button) {
+							case 0:
+								pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnLeftPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+								
+							case 1:
+								pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnCenterPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+								
+							case 2:
+								pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnRightPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
 							
-						case 1:
-							pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnCenterPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
-							
-						case 2:
-							pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnRightPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+						}
 						
+						pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
 					}
 					
-					pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+					if (pickResult.pickedMesh.actionManager.hasSpecificTrigger(ActionManager.OnLongPressTrigger)) {
+						var that = this;
+						Tools.delay(function () {
+							var pickResult = that.pick(that._unTranslatedPointerX, that._unTranslatedPointerY,
+								function(mesh:AbstractMesh):Bool { return mesh.isPickable && mesh.isVisible && mesh.isReady() && mesh.actionManager != null && mesh.actionManager.hasSpecificTrigger(ActionManager.OnLongPressTrigger); },
+								false, that.cameraToUseForPointers);
+								
+							if (pickResult.hit && pickResult.pickedMesh != null) {
+								if (pickResult.pickedMesh.actionManager != null) {
+									if (that._startingPointerTime != 0 && ((Date.now().getTime() - that._startingPointerTime) > ActionManager.LongPressDelay) && (Math.abs(that._startingPointerPosition.x - that._pointerX) < ActionManager.DragMovementThreshold && Math.abs(that._startingPointerPosition.y - that._pointerY) < ActionManager.DragMovementThreshold)) {
+										that._startingPointerTime = 0;
+										pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnLongPressTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+									}
+								}
+							}
+						}, ActionManager.LongPressDelay);
+					}
 				}
 			}
 			
@@ -507,11 +877,13 @@ import com.omnihx3d.tools.Tools;
 			}
 			
 			// Sprites
+			this._pickedDownSprite = null;
 			if (this.spriteManagers.length > 0) {
-				pickResult = this.pickSprite(this._pointerX, this._pointerY, spritePredicate, false, this.cameraToUseForPointers);
+				pickResult = this.pickSprite(this._unTranslatedPointerX, this._unTranslatedPointerY, spritePredicate, false, this.cameraToUseForPointers);
 				
 				if (pickResult.hit && pickResult.pickedSprite != null) {
 					if (pickResult.pickedSprite.actionManager != null) {
+						this._pickedDownSprite = pickResult.pickedSprite;
 						switch (button) {
 							case 0:
 								pickResult.pickedSprite.actionManager.processTrigger(ActionManager.OnLeftPickTrigger, ActionEvent.CreateNewFromSprite(pickResult.pickedSprite, this));
@@ -530,23 +902,38 @@ import com.omnihx3d.tools.Tools;
 		};
 		
 		this._onPointerUp = function(x:Int, y:Int, button:Int) {
+			if (this.cameraToUseForPointers == null && this.activeCamera == null) {
+                return;
+            }
+			
 			var predicate = null;
 			
 			this._updatePointerPosition(x, y);
 			
-			if (this.onPointerUp == null) {
+			if (this.onPointerUp == null && this.onPointerPick == null) {
 				predicate = function(mesh:AbstractMesh):Bool {
 					return mesh.isPickable && mesh.isVisible && mesh.isReady() && mesh.actionManager != null && mesh.actionManager.hasSpecificTrigger(ActionManager.OnPickUpTrigger);
 				};
 			}
 			
 			// Meshes
-			var pickResult:PickingInfo = this.pick(this._pointerX, this._pointerY, predicate, false, this.cameraToUseForPointers);
+			var pickResult:PickingInfo = this.pick(this._unTranslatedPointerX, this._unTranslatedPointerY, predicate, false, this.cameraToUseForPointers);
 			
-			if (pickResult.hit) {
+			if (pickResult.hit && pickResult.pickedMesh != null) {
+				if (this.onPointerPick != null && this._pickedDownMesh != null && pickResult.pickedMesh == this._pickedDownMesh) {
+					this.onPointerPick(pickResult);
+				}
+				
 				if (pickResult.pickedMesh.actionManager != null) {
 					pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnPickUpTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+					
+					if (Math.abs(this._startingPointerPosition.x - this._pointerX) < ActionManager.DragMovementThreshold && Math.abs(this._startingPointerPosition.y - this._pointerY) < ActionManager.DragMovementThreshold) {
+						pickResult.pickedMesh.actionManager.processTrigger(ActionManager.OnPickTrigger, ActionEvent.CreateNew(pickResult.pickedMesh));
+					}
 				}
+			}
+			if (this._pickedDownMesh != null && this._pickedDownMesh != pickResult.pickedMesh) {
+				this._pickedDownMesh.actionManager.processTrigger(ActionManager.OnPickOutTrigger, ActionEvent.CreateNew(this._pickedDownMesh));
 			}
 			
 			if (this.onPointerUp != null) {
@@ -555,18 +942,21 @@ import com.omnihx3d.tools.Tools;
 			
 			// Sprites
 			if (this.spriteManagers.length > 0) {
-				pickResult = this.pickSprite(this._pointerX, this._pointerY, spritePredicate, false, this.cameraToUseForPointers);
+				pickResult = this.pickSprite(this._unTranslatedPointerX, this._unTranslatedPointerY, spritePredicate, false, this.cameraToUseForPointers);
 				
 				if (pickResult.hit && pickResult.pickedSprite != null) {
 					if (pickResult.pickedSprite.actionManager != null) {
 						pickResult.pickedSprite.actionManager.processTrigger(ActionManager.OnPickUpTrigger, ActionEvent.CreateNewFromSprite(pickResult.pickedSprite, this));
+						
+						if (Math.abs(this._startingPointerPosition.x - this._pointerX) < ActionManager.DragMovementThreshold && Math.abs(this._startingPointerPosition.y - this._pointerY) < ActionManager.DragMovementThreshold) {
+							pickResult.pickedSprite.actionManager.processTrigger(ActionManager.OnPickTrigger, ActionEvent.CreateNewFromSprite(pickResult.pickedSprite, this));
+						}
 					}
 				}
+				if (this._pickedDownSprite != null && this._pickedDownSprite != pickResult.pickedSprite) {
+					this._pickedDownSprite.actionManager.processTrigger(ActionManager.OnPickOutTrigger, ActionEvent.CreateNewFromSprite(this._pickedDownSprite, this));
+				}
 			}
-		};
-		
-		this._onMouseMoveRelative = function(offsetX:Float, offsetY:Float) {
-			//Empty placeholder
 		};
 		
 		this._onKeyDown = function(keycode:Int) {
@@ -584,7 +974,7 @@ import com.omnihx3d.tools.Tools;
 		Engine.mouseDown.push(this._onPointerDown);
 		Engine.mouseUp.push(this._onPointerUp);
 		Engine.mouseMove.push(this._onPointerMove);
-		Engine.mouseMoveRelative.push(this._onMouseMoveRelative);
+			
 		Engine.keyDown.push(this._onKeyDown);
 		Engine.keyUp.push(this._onKeyUp);
 	}
@@ -593,7 +983,7 @@ import com.omnihx3d.tools.Tools;
 		Engine.mouseDown.remove(this._onPointerDown);
 		Engine.mouseUp.remove(this._onPointerUp);
 		Engine.mouseMove.remove(this._onPointerMove);
-		Engine.mouseMoveRelative.remove(this._onMouseMoveRelative);
+				
 		Engine.keyDown.remove(this._onKeyDown);
 		Engine.keyUp.remove(this._onKeyUp);
 	}
@@ -635,20 +1025,20 @@ import com.omnihx3d.tools.Tools;
         this._cachedMaterial = null;
     }
 	
-	public function registerBeforeRender(func:Void->Void) {
-		this._onBeforeRenderCallbacks.push(func);
+	public function registerBeforeRender(func:Scene->Null<EventState>->Void) {
+		this.onBeforeRenderObservable.add(func);
 	}
 
-	public function unregisterBeforeRender(func:Void->Void) {
-		this._onBeforeRenderCallbacks.remove(func);
+	public function unregisterBeforeRender(func:Scene->Null<EventState>->Void) {
+		this.onBeforeRenderObservable.removeCallback(func);
 	}
 	
-	public function registerAfterRender(func:Void->Void) {
-        this._onAfterRenderCallbacks.push(func);
+	public function registerAfterRender(func:Scene->Null<EventState>->Void) {
+		this.onAfterRenderObservable.add(func);
     }
 	
-    public function unregisterAfterRender(func:Void->Void) {
-        this._onAfterRenderCallbacks.remove(func);
+    public function unregisterAfterRender(func:Scene->Null<EventState>->Void) {
+        this.onAfterRenderObservable.removeCallback(func);
     }
 
 	public function _addPendingData(data:Dynamic) {
@@ -663,8 +1053,8 @@ import com.omnihx3d.tools.Tools;
 		return this._pendingData.length;
 	}
 
-	public function executeWhenReady(func:Void->Void) {
-		this._onReadyCallbacks.push(func);
+	public function executeWhenReady(func:Scene->Null<EventState>->Void) {
+		this.onReadyObservable.add(func);
 		
 		if (this._executeWhenReadyTimeoutId != -1) {
 			return;
@@ -676,12 +1066,11 @@ import com.omnihx3d.tools.Tools;
 
 	public function _checkIsReady() {
 		if (this.isReady()) {
-			for (func in this._onReadyCallbacks) {
-				func();
-			}
+			this.onReadyObservable.notifyObservers(this);
 			
-			this._onReadyCallbacks = [];
+			this.onReadyObservable.clear();
 			this._executeWhenReadyTimeoutId = -1;
+			
 			return;
 		}
 		
@@ -690,6 +1079,19 @@ import com.omnihx3d.tools.Tools;
 	}
 
 	// Animations
+	/**
+	 * Will start the animation sequence of a given target
+	 * @param target - the target 
+	 * @param {number} from - from which frame should animation start
+	 * @param {number} to - till which frame should animation run.
+	 * @param {boolean} [loop] - should the animation loop
+	 * @param {number} [speedRatio] - the speed in which to run the animation
+	 * @param {Function} [onAnimationEnd] function to be executed when the animation ended.
+	 * @param {BABYLON.Animatable} [animatable] an animatable object. If not provided a new one will be created from the given params.
+	 * @return {BABYLON.Animatable} the animatable object created for this animation
+	 * @see BABYLON.Animatable
+	 * @see http://doc.babylonjs.com/page.php?p=22081
+	 */
 	public function beginAnimation(target:Dynamic, from:Int, to:Int, loop:Bool = false, speedRatio:Float = 1.0, ?onAnimationEnd:Void->Void, ?animatable:Animatable):Animatable {
 		this.stopAnimation(target);
 		
@@ -738,11 +1140,15 @@ import com.omnihx3d.tools.Tools;
 	}
 	
 	private function _animate() {
-		if (!this.animationsEnabled) {
+		if (!this.animationsEnabled || this._activeAnimatables.length == 0) {
 			return;
 		}
 		
 		if (this._animationStartDate == -1) {
+			if (this._pendingData.length > 0) {
+                return;
+            }
+			
 			this._animationStartDate = Tools.Now();
 		}
 		
@@ -787,9 +1193,7 @@ import com.omnihx3d.tools.Tools;
 		//notify the collision coordinator
 		this.collisionCoordinator.onMeshAdded(newMesh);
 		
-		if (this.onNewMeshAdded != null) {
-			this.onNewMeshAdded(newMesh, position, this);
-		}
+		this.onNewMeshAddedObservable.notifyObservers(newMesh);
 	}
 
 	public function removeMesh(toRemove:AbstractMesh):Int {
@@ -802,9 +1206,8 @@ import com.omnihx3d.tools.Tools;
 		//notify the collision coordinator
 		this.collisionCoordinator.onMeshRemoved(toRemove);
 		
-		if (this.onMeshRemoved != null) {
-			this.onMeshRemoved(toRemove);
-		}
+		this.onMeshRemovedObservable.notifyObservers(toRemove);
+		
 		return index;
 	}
 	
@@ -824,9 +1227,9 @@ import com.omnihx3d.tools.Tools;
 			// Remove from the scene if mesh found 
 			this.lights.splice(index, 1);
 		}
-		if (this.onLightRemoved != null) {
-			this.onLightRemoved(toRemove);
-		}
+		
+		this.onLightRemovedObservable.notifyObservers(toRemove);
+		
 		return index;
 	}
 
@@ -840,7 +1243,7 @@ import com.omnihx3d.tools.Tools;
 		// Remove from activeCameras
 		index = this.activeCameras.indexOf(toRemove);
 		if (index != -1) {
-			// Remove from the scene if mesh found
+			// Remove from the scene if found
 			this.activeCameras.splice(index, 1);
 		}
 		
@@ -848,33 +1251,48 @@ import com.omnihx3d.tools.Tools;
 		if (this.activeCamera == toRemove) {
 			if (this.cameras.length > 0) {
                 this.activeCamera = this.cameras[0];
-            } else {
+            } 
+			else {
                 this.activeCamera = null;
             }
 		}
 		
-		if (this.onCameraRemoved != null) {
-			this.onCameraRemoved(toRemove);
-		}
+		this.onCameraRemovedObservable.notifyObservers(toRemove);
+		
 		return index;
 	}
 
 	public function addLight(newLight:Light) {
 		newLight.uniqueId = this._uniqueIdCounter++;
 		var position = this.lights.push(newLight);
-		if (this.onNewLightAdded != null) {
-			this.onNewLightAdded(newLight, position, this);
-		}
+		this.onNewLightAddedObservable.notifyObservers(newLight);
 	}
 
 	public function addCamera(newCamera:Camera) {
 		newCamera.uniqueId = this._uniqueIdCounter++;
 		var position = this.cameras.push(newCamera);
-		if (this.onNewCameraAdded != null) {
-			this.onNewCameraAdded(newCamera, position, this);
-		}
+		this.onNewCameraAddedObservable.notifyObservers(newCamera);
 	}
 	
+	/**
+	 * Swith the active camera of the scene
+	 * @param {Camera} newCamera - the new camera
+	 * @param {boolean} control - attachControl for the camera (default true)
+	 */
+	public function swithActiveCamera(newCamera:Camera, control:Bool = true) {				
+		this.activeCamera.detachControl();			
+		this.activeCamera = newCamera;			
+		if (control) {
+			newCamera.attachControl();
+		}	
+	}
+	
+	/**
+	 * sets the active camera of the scene using its ID
+	 * @param {string} id - the camera's ID
+	 * @return {BABYLON.Camera|null} the new active camera or null if none found.
+	 * @see activeCamera
+	 */
 	public function setActiveCameraByID(id:String):Camera {
 		var camera = this.getCameraByID(id);
 		
@@ -886,6 +1304,12 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 
+	/**
+	 * sets the active camera of the scene using its name
+	 * @param {string} name - the camera's name
+	 * @return {BABYLON.Camera|null} the new active camera or null if none found.
+	 * @see activeCamera
+	 */
 	public function setActiveCameraByName(name:String):Camera {
 		var camera = this.getCameraByName(name);
 		
@@ -897,6 +1321,11 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 
+	/**
+	 * get a material using its id
+	 * @param {string} the material's ID
+	 * @return {BABYLON.Material|null} the material or null if none found.
+	 */
 	public function getMaterialByID(id:String):Material {
 		for (index in 0...this.materials.length) {
 			if (this.materials[index].id == id) {
@@ -907,6 +1336,11 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 
+	/**
+	 * get a material using its name
+	 * @param {string} the material's name
+	 * @return {BABYLON.Material|null} the material or null if none found.
+	 */
 	public function getMaterialByName(name:String):Material {
 		for (index in 0...this.materials.length) {
 			if (this.materials[index].name == name) {
@@ -947,6 +1381,11 @@ import com.omnihx3d.tools.Tools;
         return null;
     }
 
+	/**
+	 * get a camera using its name
+	 * @param {string} the camera's name
+	 * @return {BABYLON.Camera|null} the camera or null if none found.
+	 */
 	public function getCameraByName(name:String):Camera {
 		for (index in 0...this.cameras.length) {
 			if (this.cameras[index].name == name) {
@@ -956,7 +1395,46 @@ import com.omnihx3d.tools.Tools;
 		
 		return null;
 	}
+	
+	/**
+	 * get a bone using its id
+	 * @param {string} the bone's id
+	 * @return {BABYLON.Bone|null} the bone or null if not found
+	 */
+	public function getBoneByID(id:String):Bone {
+		for (skeleton in this.skeletons) {
+			for (bone in skeleton.bones) {
+				if (bone.id == id) {
+					return bone;
+				}
+			}
+		}
+		
+		return null;
+	}
 
+	/**
+	* get a bone using its id
+	* @param {string} the bone's name
+	* @return {BABYLON.Bone|null} the bone or null if not found
+	*/
+	public function getBoneByName(name:String):Bone {
+		for (skeleton in this.skeletons) {
+			for (bone in skeleton.bones) {
+				if (bone.name == name) {
+					return bone;
+				}
+			}
+		}
+		
+		return null;
+	}
+
+	/**
+	 * get a light node using its name
+	 * @param {string} the light's name
+	 * @return {BABYLON.Light|null} the light or null if none found.
+	 */
 	public function getLightByName(name:String):Light {
 		for (index in 0...this.lights.length) {
 			if (this.lights[index].name == name) {
@@ -967,6 +1445,11 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 
+	/**
+	 * get a light node using its ID
+	 * @param {string} the light's id
+	 * @return {BABYLON.Light|null} the light or null if none found.
+	 */
 	public function getLightByID(id:String):Light {
 		for (index in 0...this.lights.length) {
 			if (this.lights[index].id == id) {
@@ -977,6 +1460,11 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 	
+	/**
+	 * get a light node using its scene-generated unique ID
+	 * @param {number} the light's unique id
+	 * @return {BABYLON.Light|null} the light or null if none found.
+	 */
 	public function getLightByUniqueID(uniqueId:Int):Light {
         for (index in 0...this.lights.length) {
             if (this.lights[index].uniqueId == uniqueId) {
@@ -986,7 +1474,27 @@ import com.omnihx3d.tools.Tools;
 		
         return null;
     }
+	
+	/**
+	 * get a particle system by id
+	 * @param id {number} the particle system id
+	 * @return {BABYLON.ParticleSystem|null} the corresponding system or null if none found.
+	 */
+	public function getParticleSystemByID(id:String):ParticleSystem {
+		for (index in 0...this.particleSystems.length) {
+			if (this.particleSystems[index].id == id) {
+				return this.particleSystems[index];
+			}
+		}
+		
+		return null;
+	}
 
+	/**
+	 * get a geometry using its ID
+	 * @param {string} the geometry's id
+	 * @return {BABYLON.Geometry|null} the geometry or null if none found.
+	 */
 	public function getGeometryByID(id:String):Geometry {
 		for (index in 0...this._geometries.length) {
 			if (this._geometries[index].id == id) {
@@ -997,18 +1505,23 @@ import com.omnihx3d.tools.Tools;
 		return null;
 	}
 
+	/**
+	 * add a new geometry to this scene.
+	 * @param {BABYLON.Geometry} geometry - the geometry to be added to the scene.
+	 * @param {boolean} [force] - force addition, even if a geometry with this ID already exists
+	 * @return {boolean} was the geometry added or not
+	 */
 	public function pushGeometry(geometry:Geometry, force:Bool = false):Bool {
 		if (!force && this.getGeometryByID(geometry.id) != null) {
 			return false;
 		}
 		
+		this._geometries.push(geometry);
+		
 		//notify the collision coordinator
 		this.collisionCoordinator.onGeometryAdded(geometry);
 		
-		this._geometries.push(geometry);
-		if (this.onGeometryAdded != null) {
-			this.onGeometryAdded(geometry);
-		}
+		this.onNewGeometryAddedObservable.notifyObservers(geometry);
 		
 		return true;
 	}
@@ -1027,11 +1540,11 @@ import com.omnihx3d.tools.Tools;
 			//notify the collision coordinator
 			this.collisionCoordinator.onGeometryDeleted(geometry);
 			
-			if (this.onGeometryRemoved != null) {
-				this.onGeometryRemoved(geometry);
-			}
+			this.onGeometryRemovedObservable.notifyObservers(geometry);
+			
 			return true;
 		}
+		
 		return false;
 	}
 
@@ -1132,7 +1645,15 @@ import com.omnihx3d.tools.Tools;
 			return light;
 		}
 		
-		return this.getCameraByID(id);
+		var camera = this.getCameraByID(id);
+		
+		if (camera != null) {
+			return camera;
+		}
+		
+		var bone = this.getBoneByID(id);
+		
+		return bone;
 	}
 	
 	public function getNodeByName(name:String):Node {
@@ -1148,7 +1669,15 @@ import com.omnihx3d.tools.Tools;
 			return light;
 		}
 		
-		return this.getCameraByName(name);
+		var camera = this.getCameraByName(name);
+		
+		if (camera != null) {
+			return camera;
+		}
+		
+		var bone = this.getBoneByName(name);
+		
+		return bone;
 	}
 
 	public function getMeshByName(name:String):AbstractMesh {
@@ -1212,7 +1741,7 @@ import com.omnihx3d.tools.Tools;
 					if (this._processedMaterials.indexOf(_eSMMaterial) == -1) {
 						this._processedMaterials.push(_eSMMaterial);
 						
-						this._renderTargets.concatSmartArray(_eSMMaterial.getRenderTargetTextures());
+						this._renderTargets.concatSmartArrayWithNoDuplicate(_eSMMaterial.getRenderTargetTextures());
 					}
 				}
 				
@@ -1222,10 +1751,12 @@ import com.omnihx3d.tools.Tools;
 			}
 		}
 	}
+	
+	public function _isInIntermediateRendering():Bool {
+        return this._intermediateRendering;
+    }
 
-	static var _activeMeshes_:Array<Mesh> = [];
-	static var _activeMesh_:Mesh = null;
-	inline private function _evaluateActiveMeshes() {
+	private function _evaluateActiveMeshes() {
 		this.activeCamera._activeMeshes.reset();
 		this._activeMeshes.reset();
 		this._renderingManager.reset();
@@ -1244,61 +1775,60 @@ import com.omnihx3d.tools.Tools;
 		}
 		
 		// Meshes
-		_activeMeshes_ = null;
-		var len:Int = -1;
+		var meshes:Array<AbstractMesh> = [];
+		var len:Int = 0;
 		
 		if (this._selectionOctree != null) { // Octree
 			var selection = this._selectionOctree.select(this._frustumPlanes);
-			_activeMeshes_ = cast selection.data;
+			meshes = selection.data;
 			len = selection.length;
 		} 
 		else { // Full scene traversal
 			len = this.meshes.length;
-			_activeMeshes_ = cast this.meshes;
+			meshes = this.meshes;
 		}
-				
+		
 		for (meshIndex in 0...len) {
-			_activeMesh_ = _activeMeshes_[meshIndex];
+			var mesh = meshes[meshIndex];
 			
-			if (_activeMesh_.isBlocked) {
+			if (mesh.isBlocked) {
 				continue;
 			}
 			
-			this._totalVertices += _activeMesh_.getTotalVertices();
+			this._totalVertices += mesh.getTotalVertices();
 			
-			if (!_activeMesh_.isReady() || !_activeMesh_.isEnabled()) {
+			if (!mesh.isReady() || !mesh.isEnabled()) {
 				continue;
 			}
 			
-			_activeMesh_.computeWorldMatrix();
+			mesh.computeWorldMatrix();
 			
 			// Intersections
-			if (_activeMesh_.actionManager != null && _activeMesh_.actionManager.hasSpecificTriggers([ActionManager.OnIntersectionEnterTrigger, ActionManager.OnIntersectionExitTrigger])) {
-				this._meshesForIntersections.pushNoDuplicate(_activeMesh_);
+			if (mesh.actionManager != null && mesh.actionManager.hasSpecificTriggers([ActionManager.OnIntersectionEnterTrigger, ActionManager.OnIntersectionExitTrigger])) {
+				this._meshesForIntersections.pushNoDuplicate(mesh);
 			}
 			
 			// Switch to current LOD
-			var meshLOD = _activeMesh_.getLOD(this.activeCamera);
+			var meshLOD = mesh.getLOD(this.activeCamera);
 			
 			if (meshLOD == null) {
 				continue;
 			}
 			
-			_activeMesh_._preActivate();
-						
-			if (_activeMesh_.alwaysSelectAsActiveMesh || _activeMesh_.isVisible && _activeMesh_.visibility > 0 && ((_activeMesh_.layerMask & this.activeCamera.layerMask) != 0) && _activeMesh_.isInFrustum(this._frustumPlanes)) {
-				this._activeMeshes.push(_activeMesh_);
-				this.activeCamera._activeMeshes.push(_activeMesh_);
-				_activeMesh_._activate(this._renderId);
-								
+			mesh._preActivate();
+			
+			if (mesh.alwaysSelectAsActiveMesh || mesh.isVisible && mesh.visibility > 0 && ((mesh.layerMask & this.activeCamera.layerMask) != 0) && mesh.isInFrustum(this._frustumPlanes)) {
+				this._activeMeshes.push(mesh);
+				this.activeCamera._activeMeshes.push(mesh);
+				mesh._activate(this._renderId);
+				
 				this._activeMesh(meshLOD);
 			}
 		}
 		
 		// Particle systems
-		//var beforeParticlesDate = Tools.Now();
+		var beforeParticlesDate = Tools.Now();
 		if (this.particlesEnabled) {
-			//Tools.StartPerformanceCounter("Particles", this.particleSystems.length > 0);
 			for (particleIndex in 0...this.particleSystems.length) {
 				var particleSystem = this.particleSystems[particleIndex];
 				
@@ -1311,9 +1841,7 @@ import com.omnihx3d.tools.Tools;
 					particleSystem.animate();
 				}
 			}
-			//Tools.EndPerformanceCounter("Particles", this.particleSystems.length > 0);
 		}
-		//this._particlesDuration += Tools.Now() - beforeParticlesDate;
 	}
 
 	private function _activeMesh(mesh:AbstractMesh) {
@@ -1343,7 +1871,8 @@ import com.omnihx3d.tools.Tools;
 				
 				len = intersections.length;
 				subMeshes = cast intersections.data;
-			} else {
+			} 
+			else {
 				subMeshes = mesh.subMeshes;
 				len = subMeshes.length;
 			}
@@ -1369,16 +1898,16 @@ import com.omnihx3d.tools.Tools;
 		}
 			
 		//Tools.StartPerformanceCounter("Rendering camera " + this.activeCamera.name);
+		
 		// Viewport
 		engine.setViewport(this.activeCamera.viewport);
 		
 		// Camera
+		this.resetCachedMaterial();
 		this._renderId++;
 		this.updateTransformMatrix();
 		
-		if (this.beforeCameraRender != null) {
-			this.beforeCameraRender(this.activeCamera);
-		}
+		this.onBeforeCameraRenderObservable.notifyObservers(this.activeCamera);
 		
 		// Meshes
 		var beforeEvaluateActiveMeshesDate = Tools.Now();
@@ -1403,7 +1932,8 @@ import com.omnihx3d.tools.Tools;
 		
 		// Render targets
 		var beforeRenderTargetDate = Tools.Now();
-		if (this.renderTargetsEnabled) {
+		if (this.renderTargetsEnabled && this._renderTargets.length > 0) {
+			this._intermediateRendering = true;
 			//Tools.StartPerformanceCounter("Render targets", this._renderTargets.length > 0);
 			for (renderIndex in 0...this._renderTargets.length) {
 				var renderTarget:RenderTargetTexture = this._renderTargets.data[renderIndex];
@@ -1413,12 +1943,13 @@ import com.omnihx3d.tools.Tools;
 					renderTarget.render(hasSpecialRenderTargetCamera);
 				}
 			}
+			
 			//Tools.EndPerformanceCounter("Render targets", this._renderTargets.length > 0);
+			
+			this._intermediateRendering = false;
 			this._renderId++;
-		}
-		
-		if (this._renderTargets.length > 0) { // Restore back buffer
-            engine.restoreDefaultFramebuffer();
+			
+            engine.restoreDefaultFramebuffer();  // Restore back buffer
         }
 		
 		this._renderTargetsDuration += Tools.Now() - beforeRenderTargetDate;
@@ -1488,9 +2019,7 @@ import com.omnihx3d.tools.Tools;
 		// Reset some special arrays
 		this._renderTargets.reset();
 		
-		if (this.afterCameraRender != null) {
-			this.afterCameraRender(this.activeCamera);
-		}
+		this.onAfterCameraRenderObservable.notifyObservers(this.activeCamera);
 		
 		//Tools.EndPerformanceCounter("Rendering camera " + this.activeCamera.name);
 	}
@@ -1501,15 +2030,10 @@ import com.omnihx3d.tools.Tools;
 			return;
 		}
 		
-		// Sub-cameras
-		for (index in 0...camera.subCameras.length) {
-			this._renderForCamera(camera.subCameras[index]);
-		}
-
-		 // rig cameras
-         for (index in 0...camera._rigCameras.length) {
-                this._renderForCamera(camera._rigCameras[index]);
-         }
+		// rig cameras
+        for (index in 0...camera._rigCameras.length) {
+            this._renderForCamera(camera._rigCameras[index]);
+        }
 		
 		this.activeCamera = camera;
 		this.setTransformMatrix(this.activeCamera.getViewMatrix(), this.activeCamera.getProjectionMatrix(false));
@@ -1526,22 +2050,32 @@ import com.omnihx3d.tools.Tools;
 				var action:Action = sourceMesh.actionManager.actions[actionIndex];
 				
 				if (action.trigger == ActionManager.OnIntersectionEnterTrigger || action.trigger == ActionManager.OnIntersectionExitTrigger) {
-					var otherMesh:AbstractMesh = cast action.getTriggerParameter();
+					var parameters = action.getTriggerParameter();
+					var otherMesh:AbstractMesh = Std.is(parameters, AbstractMesh) ? cast parameters : parameters.mesh;
 					
-					var areIntersecting = otherMesh.intersectsMesh(sourceMesh, false);
+					var areIntersecting = otherMesh.intersectsMesh(sourceMesh, parameters.usePreciseIntersection);
 					var currentIntersectionInProgress = sourceMesh._intersectionsInProgress.indexOf(otherMesh);
 					
-					if (areIntersecting && currentIntersectionInProgress == -1 && action.trigger == ActionManager.OnIntersectionEnterTrigger) {
-						action._executeCurrent(ActionEvent.CreateNew(sourceMesh));
-						sourceMesh._intersectionsInProgress.push(otherMesh);
+					if (areIntersecting && currentIntersectionInProgress == -1) {
+						if (action.trigger == ActionManager.OnIntersectionEnterTrigger) {
+							action._executeCurrent(ActionEvent.CreateNew(sourceMesh, otherMesh));
+							sourceMesh._intersectionsInProgress.push(otherMesh);
+						} 
+						else if (action.trigger == ActionManager.OnIntersectionExitTrigger) {
+							sourceMesh._intersectionsInProgress.push(otherMesh);
+						}
+					} 
+					else if (!areIntersecting && currentIntersectionInProgress > -1 && action.trigger == ActionManager.OnIntersectionExitTrigger) {
+						//They intersected, and now they don't.
 						
-					} else if (!areIntersecting && currentIntersectionInProgress > -1 && action.trigger == ActionManager.OnIntersectionExitTrigger) {
-						action._executeCurrent(ActionEvent.CreateNew(sourceMesh));
+						//is this trigger an exit trigger? execute an event.
+						if (action.trigger == ActionManager.OnIntersectionExitTrigger) {
+							action._executeCurrent(ActionEvent.CreateNew(sourceMesh, otherMesh));
+						}
 						
-						var indexOfOther = sourceMesh._intersectionsInProgress.indexOf(otherMesh);
-						
-						if (indexOfOther > -1) {
-							sourceMesh._intersectionsInProgress.splice(indexOfOther, 1);
+						//if this is an exit trigger, or no exit trigger exists, remove the id from the intersection in progress array.
+						if (!sourceMesh.actionManager.hasSpecificTrigger(ActionManager.OnIntersectionExitTrigger) || action.trigger == ActionManager.OnIntersectionExitTrigger) {
+							sourceMesh._intersectionsInProgress.splice(currentIntersectionInProgress, 1);
 						}
 					}
 				}
@@ -1589,13 +2123,11 @@ import com.omnihx3d.tools.Tools;
 		}
 		
 		// Before render
-		if (this.beforeRender != null) {
-			this.beforeRender();
-		}
+		/*if (this.beforeRender != null) {
+            this.beforeRender(this);
+        }*/
 		
-		for (callback in this._onBeforeRenderCallbacks) {
-			callback();
-		}
+		this.onBeforeRenderObservable.notifyObservers(this);
 		
 		// Customs render targets
 		//var beforeRenderTargetDate = Tools.Now();
@@ -1613,7 +2145,7 @@ import com.omnihx3d.tools.Tools;
 					if (this.activeCamera == null) {
 						throw("Active camera not set");
 					}
-						
+					
 					// Viewport
 					engine.setViewport(this.activeCamera.viewport);
 					
@@ -1635,10 +2167,9 @@ import com.omnihx3d.tools.Tools;
 		this.activeCamera = currentActiveCamera;
 		
 		// Procedural textures
-		if (this.proceduralTexturesEnabled) {
+		if (this.proceduralTexturesEnabled && this._proceduralTextures.length > 0) {
 			//Tools.StartPerformanceCounter("Procedural textures", this._proceduralTextures.length > 0);
-			for (proceduralIndex in 0...this._proceduralTextures.length) {
-				var proceduralTexture = this._proceduralTextures[proceduralIndex];
+			for (proceduralTexture in this._proceduralTextures) {
 				if (proceduralTexture._shouldRender()) {
 					proceduralTexture.render();
 				}
@@ -1674,6 +2205,10 @@ import com.omnihx3d.tools.Tools;
 			var currentRenderId = this._renderId;
 			for (cameraIndex in 0...this.activeCameras.length) {
 				this._renderId = currentRenderId;
+				if (cameraIndex > 0) {
+                    this._engine.clear(0, false, true);
+                }
+				
 				this._processSubCameras(this.activeCameras[cameraIndex]);
 			}
 		} 
@@ -1689,20 +2224,16 @@ import com.omnihx3d.tools.Tools;
 		this._checkIntersections();
 		
 		// After render
-		if (this.afterRender != null) {
-			this.afterRender();
-		}
+		/*if (this.afterRender != null) {
+			this.afterRender(this);
+		}*/
 		
-		for (callback in this._onAfterRenderCallbacks) {
-            callback();
-        }
+		this.onAfterRenderObservable.notifyObservers(this);
 		
 		// Cleaning
 		for (index in 0...this._toBeDisposed.length) {
-			this._toBeDisposed.data[index].dispose();
-			// TODO
+			this._toBeDisposed.data[index].dispose();			
 			this._toBeDisposed.data[index] = null;
-			//this._toBeDisposed[index] = null;
 			//this._toBeDisposed.data.splice(index, 1);
 		}
 		
@@ -1734,6 +2265,18 @@ import com.omnihx3d.tools.Tools;
 		this._depthRenderer.dispose();
 		this._depthRenderer = null;
 	}
+	
+	public function freezeMaterials() {
+		for (i in 0...this.materials.length) {
+			this.materials[i].freeze();
+		}
+	}
+
+	public function unfreezeMaterials() {
+		for (i in 0...this.materials.length) {
+			this.materials[i].unfreeze();
+		}
+	}
 
 	public function dispose() {
 		this.beforeRender = null;
@@ -1748,14 +2291,15 @@ import com.omnihx3d.tools.Tools;
 		}
 		
 		// Events
-		if (this.onDispose != null) {
-			this.onDispose();
-		}
+		/*if (this.onDispose != null) {
+			this.onDispose(this);
+		}*/
+		this.onDisposeObservable.notifyObservers(this);
 		
 		this.detachControl();
 		
-		this._onBeforeRenderCallbacks = [];
-		this._onAfterRenderCallbacks = [];
+		this.onBeforeRenderObservable.clear();
+        this.onAfterRenderObservable.clear();
 		
 		// Detach cameras
 		/*var canvas = this._engine.getRenderingCanvas();
@@ -1878,8 +2422,8 @@ import com.omnihx3d.tools.Tools;
 			var minBox = mesh.getBoundingInfo().boundingBox.minimumWorld;
 			var maxBox = mesh.getBoundingInfo().boundingBox.maximumWorld;
 			
-			Tools.CheckExtends(minBox, min, max);
-			Tools.CheckExtends(maxBox, min, max);
+			com.omnihx3d.math.Tools.CheckExtends(minBox, min, max);
+			com.omnihx3d.math.Tools.CheckExtends(maxBox, min, max);
 		}
 		
 		return {
@@ -1914,11 +2458,12 @@ import com.omnihx3d.tools.Tools;
 		}
 		
 		var cameraViewport = camera.viewport;
-		var viewport = cameraViewport.toGlobal(engine);
+		var viewport = cameraViewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight());
 		
 		// Moving coordinates to local viewport world
 		x = x / this._engine.getHardwareScalingLevel() - viewport.x;
 		y = y / this._engine.getHardwareScalingLevel() - (this._engine.getRenderHeight() - viewport.y - viewport.height);
+		
 		return Ray.CreateNew(x, y, viewport.width, viewport.height, world != null ? world : Matrix.Identity(), cameraViewSpace ? Matrix.Identity() : camera.getViewMatrix(), camera.getProjectionMatrix(false));
 	}
 	
@@ -1934,12 +2479,13 @@ import com.omnihx3d.tools.Tools;
 		}
 		
 		var cameraViewport = camera.viewport;
-		var viewport = cameraViewport.toGlobal(engine);
+		var viewport = cameraViewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight());
 		var identity = Matrix.Identity();
 		
 		// Moving coordinates to local viewport world
 		x = x / this._engine.getHardwareScalingLevel() - viewport.x;
 		y = y / this._engine.getHardwareScalingLevel() - (this._engine.getRenderHeight() - viewport.y - viewport.height);
+		
 		return Ray.CreateNew(x, y, viewport.width, viewport.height, identity, identity, camera.getProjectionMatrix(false));
 	}
 
@@ -2062,6 +2608,25 @@ import com.omnihx3d.tools.Tools;
 
 	inline public function getPointerOverMesh():AbstractMesh {
 		return this._pointerOverMesh;
+	}
+	
+	public function setPointerOverSprite(sprite:Sprite) {
+		if (this._pointerOverSprite == sprite) {
+			return;
+		}
+		
+		if (this._pointerOverSprite != null && this._pointerOverSprite.actionManager != null) {
+			this._pointerOverSprite.actionManager.processTrigger(ActionManager.OnPointerOutTrigger, ActionEvent.CreateNewFromSprite(this._pointerOverSprite, this));
+		}
+		
+		this._pointerOverSprite = sprite;
+		if (this._pointerOverSprite != null && this._pointerOverSprite.actionManager != null) {
+			this._pointerOverSprite.actionManager.processTrigger(ActionManager.OnPointerOverTrigger, ActionEvent.CreateNewFromSprite(this._pointerOverSprite, this));
+		}
+	}
+	
+	public function getPointerOverSprite():Sprite {
+		return this._pointerOverSprite;
 	}
 
 	// Physics

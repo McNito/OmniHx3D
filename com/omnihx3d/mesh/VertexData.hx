@@ -5,12 +5,13 @@ import com.omnihx3d.math.Vector3;
 import com.omnihx3d.math.Vector2;
 import com.omnihx3d.math.Vector4;
 import com.omnihx3d.math.Color4;
-
 import com.omnihx3d.mesh.MeshBuilder;
 
 import com.omnihx3d.utils.typedarray.UInt8Array;
 import com.omnihx3d.utils.typedarray.Float32Array;
 import com.omnihx3d.utils.typedarray.Int32Array;
+
+//import haxe.ds.Either;
 
 /**
  * ...
@@ -19,6 +20,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 
 @:expose('BABYLON.VertexData') class VertexData {
 	
+	//public var positions:Either<Array<Float>, Float32Array>;
 	public var positions:Array<Float>;
 	public var normals:Array<Float>;
 	public var uvs:Array<Float>;
@@ -42,7 +44,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		// nothing to do here ...
 	}
 
-	//@:generic public function set<T:(Array<Float>, Float32Array)>(data:T, kind:String) {
+	//@:generic public function set<T>(data:T, kind:String) {
 	public function set(data:Array<Float>, kind:String) {
 		switch (kind) {
 			case VertexBuffer.PositionKind:
@@ -461,8 +463,8 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		var pathArray:Array<Array<Vector3>> = cast(options.pathArray);
 		var closeArray:Bool = options.closeArray != null ? options.closeArray : false;
 		var closePath:Bool = options.closePath != null ? options.closePath : false;
-		var defaultOffset = Math.floor(pathArray[0].length / 2);
-		var offset = options.offset != null ? options.offset : defaultOffset;
+		var defaultOffset:Int = Math.floor(pathArray[0].length / 2);
+		var offset:Int = options.offset != null ? options.offset : defaultOffset;
 		offset = offset > defaultOffset ? defaultOffset : Math.floor(offset); // offset max allowed : defaultOffset
 		var	sideOrientation:Int = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
 		
@@ -652,7 +654,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		vertexData.positions = positions;
 		vertexData.normals = normals;
 		vertexData.uvs = uvs;
-						
+		
 		if (closePath) {
 			vertexData._idx = idx;
 		}
@@ -678,7 +680,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		var width:Float = options.width;
 		var height:Float = options.height;
 		var depth:Float = options.depth;
-		var sideOrientation = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
+		var sideOrientation:Int = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
 		var faceUV:Array<Vector4> = options.faceUV != null ? options.faceUV : new Array<Vector4>();
 		var faceColors:Array<Color4> = options.faceColors;
 		var colors:Array<Float> = [];
@@ -699,8 +701,8 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 			var normal:Vector3 = normalsSource[index];
 			
 			// Get two vectors perpendicular to the face normal and to each other.
-			var side1 = new Vector3(normal.y, normal.z, normal.x);
-			var side2 = Vector3.Cross(normal, side1);
+			var side1:Vector3 = new Vector3(normal.y, normal.z, normal.x);
+			var side2:Vector3 = Vector3.Cross(normal, side1);
 			
 			// Six indices (two triangles) per face.
 			var verticesLength = Std.int(positions.length / 3);
@@ -788,7 +790,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		vertexData.positions = positions;
 		vertexData.normals = normals;
 		vertexData.uvs = uvs;
-				
+		
 		if (faceColors != null && faceColors.length > 0) {
 			var totalColors = (sideOrientation == Mesh.DOUBLESIDE) ? colors.concat(colors) : colors;
 			vertexData.colors = totalColors;
@@ -803,10 +805,11 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		var normals:Array<Float> = [];
 		var uvs:Array<Float> = [];
 		
-		var	segments = options.segments != null ? options.segments : 32;
-		var	diameterX = options.diameterX != null ? options.diameterX : 1;
-		var	diameterY = options.diameterY != null ? options.diameterY : 1;
-		var	diameterZ = options.diameterZ != null ? options.diameterZ : 1;
+		var	segments:Int = options.segments != null ? options.segments : 32;
+		var	diameterX:Float = options.diameterX != null ? options.diameterX : 1;
+		var	diameterY:Float = options.diameterY != null ? options.diameterY : 1;
+		var	diameterZ:Float = options.diameterZ != null ? options.diameterZ : 1;
+		
 		var arc:Float = options.arc != null ? options.arc : 1.0;
 		if (arc < 0) {
 			arc = 1.0;
@@ -815,23 +818,23 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		if (slice < 0) {
 			slice = 1.0;
 		}
-		var sideOrientation = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
-		var radius = new Vector3(diameterX / 2, diameterY / 2, diameterZ / 2);
-		var totalZRotationSteps = 2 + segments;
-		var totalYRotationSteps = 2 * totalZRotationSteps;
+		var sideOrientation:Int = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
+		var radius:Vector3 = new Vector3(diameterX / 2, diameterY / 2, diameterZ / 2);
+		var totalZRotationSteps:Int = 2 + segments;
+		var totalYRotationSteps:Int = 2 * totalZRotationSteps;
 		
 		for (zRotationStep in 0...totalZRotationSteps + 1) {
 			var normalizedZ = zRotationStep / totalZRotationSteps;
 			var angleZ = (normalizedZ * Math.PI);
 			for (yRotationStep in 0...totalYRotationSteps + 1) {
-				var normalizedY = yRotationStep / totalYRotationSteps;
-				var angleY = normalizedY * Math.PI * 2;
-				var rotationZ = Matrix.RotationZ(-angleZ);
-				var rotationY = Matrix.RotationY(angleY);
-				var afterRotZ = Vector3.TransformCoordinates(Vector3.Up(), rotationZ);
-				var complete = Vector3.TransformCoordinates(afterRotZ, rotationY);
-				var vertex = complete.multiply(radius);
-				var normal = Vector3.Normalize(vertex);
+				var normalizedY:Float = yRotationStep / totalYRotationSteps;
+				var angleY:Float = normalizedY * Math.PI * 2;
+				var rotationZ:Matrix = Matrix.RotationZ(-angleZ);
+				var rotationY:Matrix = Matrix.RotationY(angleY);
+				var afterRotZ:Vector3 = Vector3.TransformCoordinates(Vector3.Up(), rotationZ);
+				var complete:Vector3 = Vector3.TransformCoordinates(afterRotZ, rotationY);
+				var vertex:Vector3 = complete.multiply(radius);
+				var normal:Vector3 = Vector3.Normalize(vertex);
 				positions.push(vertex.x);
 				positions.push(vertex.y);
 				positions.push(vertex.z);
@@ -1089,9 +1092,9 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 				c = isTop ? faceColors[2] : faceColors[0];
 			}
 			// cap center
-			var vbase = Std.int(positions.length / 3);
-			var offset = isTop ? height / 2 : -height / 2;
-			var center = new Vector3(0, offset, 0);
+			var vbase:Int = Std.int(positions.length / 3);
+			var offset:Float = isTop ? height / 2 : -height / 2;
+			var center:Vector3 = new Vector3(0, offset, 0);
 			positions.push(center.x);
 			positions.push(center.y);
 			positions.push(center.z);
@@ -1107,11 +1110,11 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 				colors.push(c.a);
 			}
 			
-			var textureScale = new Vector2(0.5, 0.5);
+			var textureScale:Vector2 = new Vector2(0.5, 0.5);
 			for (i in 0...tessellation+1) {
 				angle = Math.PI * 2 * i * arc / tessellation;
-				var cos = Math.cos(-angle);
-				var sin = Math.sin(-angle);
+				var cos:Float = Math.cos(-angle);
+				var sin:Float = Math.sin(-angle);
 				circleVector = new Vector3(cos * radius, offset, sin * radius);
 				var textureCoordinate = new Vector2(cos * textureScale.x + 0.5, sin * textureScale.y + 0.5);
 				positions.push(circleVector.x);
@@ -1248,10 +1251,10 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		var i:Int = 0;
 		for (s in 0...subdivisions) {
 			for (j in 0...tessellation) {
-				var i0 = i * (tessellation + 1) + j;
-				var i1 = (i + 1) * (tessellation + 1) + j;
-				var i2 = i * (tessellation + 1) + (j + 1);
-				var i3 = (i + 1) * (tessellation + 1) + (j + 1);
+				var i0:Int = Std.int(i * (tessellation + 1) + j);
+				var i1:Int = Std.int((i + 1) * (tessellation + 1) + j);
+				var i2:Int = Std.int(i * (tessellation + 1) + (j + 1));
+				var i3:Int = Std.int((i + 1) * (tessellation + 1) + (j + 1));
 				indices.push(i0);
 				indices.push(i1);
 				indices.push(i2);
@@ -1264,7 +1267,7 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		
 		// Caps
 		var createCylinderCap = function(isTop:Bool) {
-			var radius = isTop ? diameterTop / 2 : diameterBottom / 2;
+			var radius:Float = isTop ? diameterTop / 2 : diameterBottom / 2;
 			if (radius == 0) {
 				return;
 			}
@@ -1278,9 +1281,9 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 				c = isTop ? faceColors[2] : faceColors[0];
 			}
 			// cap center
-			var vbase = Std.int(positions.length / 3);
-			var offset = isTop ? height / 2 : -height / 2;
-			var center = new Vector3(0, offset, 0);
+			var vbase:Int = Std.int(positions.length / 3);
+			var offset:Float = isTop ? height / 2 : -height / 2;
+			var center:Vector3 = new Vector3(0, offset, 0);
 			positions.push(center.x);
 			positions.push(center.y);
 			positions.push(center.z);
@@ -1299,10 +1302,10 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 			var textureScale = new Vector2(0.5, 0.5);
 			for (i in 0...tessellation+1) {
 				angle = Math.PI * 2 * i * arc / tessellation;
-				var cos = Math.cos(-angle);
-				var sin = Math.sin(-angle);
+				var cos:Float = Math.cos(-angle);
+				var sin:Float = Math.sin(-angle);
 				circleVector = new Vector3(cos * radius, offset, sin * radius);
-				var textureCoordinate = new Vector2(cos * textureScale.x + 0.5, sin * textureScale.y + 0.5);
+				var textureCoordinate:Vector2 = new Vector2(cos * textureScale.x + 0.5, sin * textureScale.y + 0.5);
 				positions.push(circleVector.x);
 				positions.push(circleVector.y);
 				positions.push(circleVector.z);
@@ -1360,17 +1363,17 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		var normals:Array<Float> = [];
 		var uvs:Array<Float> = [];
 		
-		var diameter = options.diameter != null ? options.diameter : 1;
-		var thickness = options.thickness != null ? options.thickness : 0.5;
-		var tessellation = options.tessellation != null ? options.tessellation : 16;
-		var sideOrientation = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
+		var diameter:Float = options.diameter != null ? options.diameter : 1;
+		var thickness:Float = options.thickness != null ? options.thickness : 0.5;
+		var tessellation:Int = options.tessellation != null ? options.tessellation : 16;
+		var sideOrientation:Int = options.sideOrientation != null ? options.sideOrientation : Mesh.DEFAULTSIDE;
 		
-		var stride = tessellation + 1;
+		var stride:Int = tessellation + 1;
 		
 		for (i in 0...tessellation + 1) {
-			var u = i / tessellation;			
-			var outerAngle = i * Math.PI * 2.0 / tessellation - Math.PI / 2.0;			
-			var transform = Matrix.Translation(diameter / 2.0, 0, 0).multiply(Matrix.RotationY(outerAngle));
+			var u:Float = i / tessellation;			
+			var outerAngle:Float = i * Math.PI * 2.0 / tessellation - Math.PI / 2.0;			
+			var transform:Matrix = Matrix.Translation(diameter / 2.0, 0, 0).multiply(Matrix.RotationY(outerAngle));
 			
 			for (j in 0...tessellation + 1) {
 				var v = 1 - j / tessellation;
@@ -1420,6 +1423,35 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		vertexData.positions = positions;
 		vertexData.normals = normals;
 		vertexData.uvs = uvs;
+		
+		return vertexData;
+	}
+	
+	// options: { lines:Array<Array<Vector3>> }
+	public static function CreateLineSystem(options:Dynamic):VertexData {
+		var indices:Array<Int> = [];
+		var positions:Array<Float> = [];
+		var lines:Array<Array<Vector3>> = options.lines;
+		var idx:Int = 0;
+		
+		for (l in 0...lines.length) {
+			var points = lines[l];
+			for (index in 0...points.length) {
+				positions.push(points[index].x);
+				positions.push(points[index].y);
+				positions.push(points[index].z);
+				
+				if (index > 0) {
+					indices.push(idx - 1);
+					indices.push(idx);
+				}
+				idx ++;
+			}               
+		}
+		
+		var vertexData = new VertexData();
+		vertexData.indices = indices;
+		vertexData.positions = positions;
 		
 		return vertexData;
 	}
@@ -2069,24 +2101,34 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 		// 9 : Pentagonal Pyramid (J2), 10 : Triangular Dipyramid (J12), 11 : Pentagonal Dipyramid (J13), 12 : Elongated Square Dipyramid (J15), 13 : Elongated Pentagonal Dipyramid (J16), 14 : Elongated Pentagonal Cupola (J20)
 		var polyhedra:Array<Dynamic> = [];
 		polyhedra[0] = { vertex: [[0, 0, 1.732051], [1.632993, 0, -0.5773503], [-0.8164966, 1.414214, -0.5773503], [-0.8164966, -1.414214, -0.5773503]], face: [[0, 1, 2], [0, 2, 3], [0, 3, 1], [1, 3, 2]] };
-		polyhedra[1] = { vertex: [[0, 0, 1.414214], [1.414214, 0, 0], [0, 1.414214, 0], [-1.414214, 0, 0], [0, -1.414214, 0], [0, 0, -1.414214]], face: [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1], [1, 4, 5], [1, 5, 2], [2, 5, 3], [3, 5, 4]] };
-		polyhedra[2] = { vertex: [[0, 0, 1.070466], [0.7136442, 0, 0.7978784], [-0.3568221, 0.618034, 0.7978784], [-0.3568221, -0.618034, 0.7978784], [0.7978784, 0.618034, 0.3568221], [0.7978784, -0.618034, 0.3568221], [-0.9341724, 0.381966, 0.3568221], [0.1362939, 1, 0.3568221], [0.1362939, -1, 0.3568221], [-0.9341724, -0.381966, 0.3568221], [0.9341724, 0.381966, -0.3568221], [0.9341724, -0.381966, -0.3568221], [-0.7978784, 0.618034, -0.3568221], [-0.1362939, 1, -0.3568221], [-0.1362939, -1, -0.3568221], [-0.7978784, -0.618034, -0.3568221], [0.3568221, 0.618034, -0.7978784], [0.3568221, -0.618034, -0.7978784], [-0.7136442, 0, -0.7978784], [0, 0, -1.070466]], face: [[0, 1, 4, 7, 2], [0, 2, 6, 9, 3], [0, 3, 8, 5, 1], [1, 5, 11, 10, 4], [2, 7, 13, 12, 6], [3, 9, 15, 14, 8], [4, 10, 16, 13, 7], [5, 8, 14, 17, 11], [6, 12, 18, 15, 9], [10, 11, 17, 19, 16], [12, 13, 16, 19, 18], [14, 15, 18, 19, 17]]
-		};
-		polyhedra[3] = { vertex: [[0, 0, 1.175571], [1.051462, 0, 0.5257311], [0.3249197, 1, 0.5257311], [-0.8506508, 0.618034, 0.5257311], [-0.8506508, -0.618034, 0.5257311], [0.3249197, -1, 0.5257311], [0.8506508, 0.618034, -0.5257311], [0.8506508, -0.618034, -0.5257311], [-0.3249197, 1, -0.5257311], [-1.051462, 0, -0.5257311], [-0.3249197, -1, -0.5257311], [0, 0, -1.175571]], face: [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 1], [1, 5, 7], [1, 7, 6], [1, 6, 2], [2, 6, 8], [2, 8, 3], [3, 8, 9], [3, 9, 4], [4, 9, 10], [4, 10, 5], [5, 10, 7], [6, 7, 11], [6, 11, 8], [7, 10, 11], [8, 11, 9], [9, 11, 10]]
-		};
-		polyhedra[4] = { vertex: [[0, 0, 1.070722], [0.7148135, 0, 0.7971752], [-0.104682, 0.7071068, 0.7971752], [-0.6841528, 0.2071068, 0.7971752], [-0.104682, -0.7071068, 0.7971752], [0.6101315, 0.7071068, 0.5236279], [1.04156, 0.2071068, 0.1367736], [0.6101315, -0.7071068, 0.5236279], [-0.3574067, 1, 0.1367736], [-0.7888348, -0.5, 0.5236279], [-0.9368776, 0.5, 0.1367736], [-0.3574067, -1, 0.1367736], [0.3574067, 1, -0.1367736], [0.9368776, -0.5, -0.1367736], [0.7888348, 0.5, -0.5236279], [0.3574067, -1, -0.1367736], [-0.6101315, 0.7071068, -0.5236279], [-1.04156, -0.2071068, -0.1367736], [-0.6101315, -0.7071068, -0.5236279], [0.104682, 0.7071068, -0.7971752], [0.6841528, -0.2071068, -0.7971752], [0.104682, -0.7071068, -0.7971752], [-0.7148135, 0, -0.7971752], [0, 0, -1.070722]], face: [[0, 2, 3], [1, 6, 5], [4, 9, 11], [7, 15, 13], [8, 16, 10], [12, 14, 19], [17, 22, 18], [20, 21, 23], [0, 1, 5, 2], [0, 3, 9, 4], [0, 4, 7, 1], [1, 7, 13, 6], [2, 5, 12, 8], [2, 8, 10, 3], [3, 10, 17, 9], [4, 11, 15, 7], [5, 6, 14, 12], [6, 13, 20, 14], [8, 12, 19, 16], [9, 17, 18, 11], [10, 16, 22, 17], [11, 18, 21, 15], [13, 15, 21, 20], [14, 20, 23, 19], [16, 19, 23, 22], [18, 22, 23, 21]]
-		};
-		polyhedra[5] = { vertex: [[0, 0, 1.322876], [1.309307, 0, 0.1889822], [-0.9819805, 0.8660254, 0.1889822], [0.1636634, -1.299038, 0.1889822], [0.3273268, 0.8660254, -0.9449112], [-0.8183171, -0.4330127, -0.9449112]], face: [[0, 3, 1], [2, 4, 5], [0, 1, 4, 2], [0, 2, 5, 3], [1, 3, 5, 4]] };
-		polyhedra[6] = { vertex: [[0, 0, 1.159953], [1.013464, 0, 0.5642542], [-0.3501431, 0.9510565, 0.5642542], [-0.7715208, -0.6571639, 0.5642542], [0.6633206, 0.9510565, -0.03144481], [0.8682979, -0.6571639, -0.3996071], [-1.121664, 0.2938926, -0.03144481], [-0.2348831, -1.063314, -0.3996071], [0.5181548, 0.2938926, -0.9953061], [-0.5850262, -0.112257, -0.9953061]], face: [[0, 1, 4, 2], [0, 2, 6, 3], [1, 5, 8, 4], [3, 6, 9, 7], [5, 7, 9, 8], [0, 3, 7, 5, 1], [2, 4, 8, 9, 6]] };
-		polyhedra[7] = { vertex: [[0, 0, 1.118034], [0.8944272, 0, 0.6708204], [-0.2236068, 0.8660254, 0.6708204], [-0.7826238, -0.4330127, 0.6708204], [0.6708204, 0.8660254, 0.2236068], [1.006231, -0.4330127, -0.2236068], [-1.006231, 0.4330127, 0.2236068], [-0.6708204, -0.8660254, -0.2236068], [0.7826238, 0.4330127, -0.6708204], [0.2236068, -0.8660254, -0.6708204], [-0.8944272, 0, -0.6708204], [0, 0, -1.118034]], face: [[0, 1, 4, 2], [0, 2, 6, 3], [1, 5, 8, 4], [3, 6, 10, 7], [5, 9, 11, 8], [7, 10, 11, 9], [0, 3, 7, 9, 5, 1], [2, 4, 8, 11, 10, 6]] };
-		polyhedra[8] = { vertex: [[-0.729665, 0.670121, 0.319155], [-0.655235, -0.29213, -0.754096], [-0.093922, -0.607123, 0.537818], [0.702196, 0.595691, 0.485187], [0.776626, -0.36656, -0.588064]], face: [[1, 4, 2], [0, 1, 2], [3, 0, 2], [4, 3, 2], [4, 1, 0, 3]] };
-		polyhedra[9] = { vertex: [[-0.868849, -0.100041, 0.61257], [-0.329458, 0.976099, 0.28078], [-0.26629, -0.013796, -0.477654], [-0.13392, -1.034115, 0.229829], [0.738834, 0.707117, -0.307018], [0.859683, -0.535264, -0.338508]], face: [[3, 0, 2], [5, 3, 2], [4, 5, 2], [1, 4, 2], [0, 1, 2], [0, 3, 5, 4, 1]] };
-		polyhedra[10] = { vertex: [[-0.610389, 0.243975, 0.531213], [-0.187812, -0.48795, -0.664016], [-0.187812, 0.9759, -0.664016], [0.187812, -0.9759, 0.664016], [0.798201, 0.243975, 0.132803]], face: [[1, 3, 0], [3, 4, 0], [3, 1, 4], [0, 2, 1], [0, 4, 2], [2, 4, 1]] };
-		polyhedra[11] = { vertex: [[-1.028778, 0.392027, -0.048786], [-0.640503, -0.646161, 0.621837], [-0.125162, -0.395663, -0.540059], [0.004683, 0.888447, -0.651988], [0.125161, 0.395663, 0.540059], [0.632925, -0.791376, 0.433102], [1.031672, 0.157063, -0.354165]], face: [[3, 2, 0], [2, 1, 0], [2, 5, 1], [0, 4, 3], [0, 1, 4], [4, 1, 5], [2, 3, 6], [3, 4, 6], [5, 2, 6], [4, 5, 6]] };
-		polyhedra[12] = { vertex: [[-0.669867, 0.334933, -0.529576], [-0.669867, 0.334933, 0.529577], [-0.4043, 1.212901, 0], [-0.334933, -0.669867, -0.529576], [-0.334933, -0.669867, 0.529577], [0.334933, 0.669867, -0.529576], [0.334933, 0.669867, 0.529577], [0.4043, -1.212901, 0], [0.669867, -0.334933, -0.529576], [0.669867, -0.334933, 0.529577]], face: [[8, 9, 7], [6, 5, 2], [3, 8, 7], [5, 0, 2], [4, 3, 7], [0, 1, 2], [9, 4, 7], [1, 6, 2], [9, 8, 5, 6], [8, 3, 0, 5], [3, 4, 1, 0], [4, 9, 6, 1]] };
-		polyhedra[13] = { vertex: [[-0.931836, 0.219976, -0.264632], [-0.636706, 0.318353, 0.692816], [-0.613483, -0.735083, -0.264632], [-0.326545, 0.979634, 0], [-0.318353, -0.636706, 0.692816], [-0.159176, 0.477529, -0.856368], [0.159176, -0.477529, -0.856368], [0.318353, 0.636706, 0.692816], [0.326545, -0.979634, 0], [0.613482, 0.735082, -0.264632], [0.636706, -0.318353, 0.692816], [0.931835, -0.219977, -0.264632]], face: [[11, 10, 8], [7, 9, 3], [6, 11, 8], [9, 5, 3], [2, 6, 8], [5, 0, 3], [4, 2, 8], [0, 1, 3], [10, 4, 8], [1, 7, 3], [10, 11, 9, 7], [11, 6, 5, 9], [6, 2, 0, 5], [2, 4, 1, 0], [4, 10, 7, 1]] };
-		polyhedra[14] = { vertex: [[-0.93465, 0.300459, -0.271185], [-0.838689, -0.260219, -0.516017], [-0.711319, 0.717591, 0.128359], [-0.710334, -0.156922, 0.080946], [-0.599799, 0.556003, -0.725148], [-0.503838, -0.004675, -0.969981], [-0.487004, 0.26021, 0.48049], [-0.460089, -0.750282, -0.512622], [-0.376468, 0.973135, -0.325605], [-0.331735, -0.646985, 0.084342], [-0.254001, 0.831847, 0.530001], [-0.125239, -0.494738, -0.966586], [0.029622, 0.027949, 0.730817], [0.056536, -0.982543, -0.262295], [0.08085, 1.087391, 0.076037], [0.125583, -0.532729, 0.485984], [0.262625, 0.599586, 0.780328], [0.391387, -0.726999, -0.716259], [0.513854, -0.868287, 0.139347], [0.597475, 0.85513, 0.326364], [0.641224, 0.109523, 0.783723], [0.737185, -0.451155, 0.538891], [0.848705, -0.612742, -0.314616], [0.976075, 0.365067, 0.32976], [1.072036, -0.19561, 0.084927]], face: [[15, 18, 21], [12, 20, 16], [6, 10, 2], [3, 0, 1], [9, 7, 13], [2, 8, 4, 0], [0, 4, 5, 1], [1, 5, 11, 7], [7, 11, 17, 13], [13, 17, 22, 18], [18, 22, 24, 21], [21, 24, 23, 20], [20, 23, 19, 16], [16, 19, 14, 10], [10, 14, 8, 2], [15, 9, 13, 18], [12, 15, 21, 20], [6, 12, 16, 10], [3, 6, 2, 0], [9, 3, 1, 7], [9, 15, 12, 6, 3], [22, 17, 11, 5, 4, 8, 14, 19, 23, 24]]
-		};
+
+		polyhedra[1] = { vertex: [[0, 0, 1.414214], [1.414214, 0, 0], [0, 1.414214, 0], [ -1.414214, 0, 0], [0, -1.414214, 0], [0, 0, -1.414214]], face: [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1], [1, 4, 5], [1, 5, 2], [2, 5, 3], [3, 5, 4]] };
+		
+		polyhedra[2] = { vertex: [[0, 0, 1.070466], [0.7136442, 0, 0.7978784], [-0.3568221, 0.618034, 0.7978784], [-0.3568221, -0.618034, 0.7978784], [0.7978784, 0.618034, 0.3568221], [0.7978784, -0.618034, 0.3568221], [-0.9341724, 0.381966, 0.3568221], [0.1362939, 1, 0.3568221], [0.1362939, -1, 0.3568221], [-0.9341724, -0.381966, 0.3568221], [0.9341724, 0.381966, -0.3568221], [0.9341724, -0.381966, -0.3568221], [-0.7978784, 0.618034, -0.3568221], [-0.1362939, 1, -0.3568221], [-0.1362939, -1, -0.3568221], [-0.7978784, -0.618034, -0.3568221], [0.3568221, 0.618034, -0.7978784], [0.3568221, -0.618034, -0.7978784], [-0.7136442, 0, -0.7978784], [0, 0, -1.070466]], face: [[0, 1, 4, 7, 2], [0, 2, 6, 9, 3], [0, 3, 8, 5, 1], [1, 5, 11, 10, 4], [2, 7, 13, 12, 6], [3, 9, 15, 14, 8], [4, 10, 16, 13, 7], [5, 8, 14, 17, 11], [6, 12, 18, 15, 9], [10, 11, 17, 19, 16], [12, 13, 16, 19, 18], [14, 15, 18, 19, 17]] };
+		
+		polyhedra[3] = { vertex: [[0, 0, 1.175571], [1.051462, 0, 0.5257311], [0.3249197, 1, 0.5257311], [-0.8506508, 0.618034, 0.5257311], [-0.8506508, -0.618034, 0.5257311], [0.3249197, -1, 0.5257311], [0.8506508, 0.618034, -0.5257311], [0.8506508, -0.618034, -0.5257311], [-0.3249197, 1, -0.5257311], [-1.051462, 0, -0.5257311], [-0.3249197, -1, -0.5257311], [0, 0, -1.175571]], face: [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 1], [1, 5, 7], [1, 7, 6], [1, 6, 2], [2, 6, 8], [2, 8, 3], [3, 8, 9], [3, 9, 4], [4, 9, 10], [4, 10, 5], [5, 10, 7], [6, 7, 11], [6, 11, 8], [7, 10, 11], [8, 11, 9], [9, 11, 10]] };
+		
+		polyhedra[4] = { vertex: [[0, 0, 1.070722], [0.7148135, 0, 0.7971752], [-0.104682, 0.7071068, 0.7971752], [-0.6841528, 0.2071068, 0.7971752], [-0.104682, -0.7071068, 0.7971752], [0.6101315, 0.7071068, 0.5236279], [1.04156, 0.2071068, 0.1367736], [0.6101315, -0.7071068, 0.5236279], [-0.3574067, 1, 0.1367736], [-0.7888348, -0.5, 0.5236279], [-0.9368776, 0.5, 0.1367736], [-0.3574067, -1, 0.1367736], [0.3574067, 1, -0.1367736], [0.9368776, -0.5, -0.1367736], [0.7888348, 0.5, -0.5236279], [0.3574067, -1, -0.1367736], [-0.6101315, 0.7071068, -0.5236279], [-1.04156, -0.2071068, -0.1367736], [-0.6101315, -0.7071068, -0.5236279], [0.104682, 0.7071068, -0.7971752], [0.6841528, -0.2071068, -0.7971752], [0.104682, -0.7071068, -0.7971752], [-0.7148135, 0, -0.7971752], [0, 0, -1.070722]], face: [[0, 2, 3], [1, 6, 5], [4, 9, 11], [7, 15, 13], [8, 16, 10], [12, 14, 19], [17, 22, 18], [20, 21, 23], [0, 1, 5, 2], [0, 3, 9, 4], [0, 4, 7, 1], [1, 7, 13, 6], [2, 5, 12, 8], [2, 8, 10, 3], [3, 10, 17, 9], [4, 11, 15, 7], [5, 6, 14, 12], [6, 13, 20, 14], [8, 12, 19, 16], [9, 17, 18, 11], [10, 16, 22, 17], [11, 18, 21, 15], [13, 15, 21, 20], [14, 20, 23, 19], [16, 19, 23, 22], [18, 22, 23, 21]] };
+		
+		polyhedra[5] = { vertex: [[0, 0, 1.322876], [1.309307, 0, 0.1889822], [ -0.9819805, 0.8660254, 0.1889822], [0.1636634, -1.299038, 0.1889822], [0.3273268, 0.8660254, -0.9449112], [ -0.8183171, -0.4330127, -0.9449112]], face: [[0, 3, 1], [2, 4, 5], [0, 1, 4, 2], [0, 2, 5, 3], [1, 3, 5, 4]] };
+		
+		polyhedra[6] = { vertex: [[0, 0, 1.159953], [1.013464, 0, 0.5642542], [ -0.3501431, 0.9510565, 0.5642542], [ -0.7715208, -0.6571639, 0.5642542], [0.6633206, 0.9510565, -0.03144481], [0.8682979, -0.6571639, -0.3996071], [ -1.121664, 0.2938926, -0.03144481], [ -0.2348831, -1.063314, -0.3996071], [0.5181548, 0.2938926, -0.9953061], [ -0.5850262, -0.112257, -0.9953061]], face: [[0, 1, 4, 2], [0, 2, 6, 3], [1, 5, 8, 4], [3, 6, 9, 7], [5, 7, 9, 8], [0, 3, 7, 5, 1], [2, 4, 8, 9, 6]] };
+		
+		polyhedra[7] = { vertex: [[0, 0, 1.118034], [0.8944272, 0, 0.6708204], [ -0.2236068, 0.8660254, 0.6708204], [ -0.7826238, -0.4330127, 0.6708204], [0.6708204, 0.8660254, 0.2236068], [1.006231, -0.4330127, -0.2236068], [ -1.006231, 0.4330127, 0.2236068], [ -0.6708204, -0.8660254, -0.2236068], [0.7826238, 0.4330127, -0.6708204], [0.2236068, -0.8660254, -0.6708204], [ -0.8944272, 0, -0.6708204], [0, 0, -1.118034]], face: [[0, 1, 4, 2], [0, 2, 6, 3], [1, 5, 8, 4], [3, 6, 10, 7], [5, 9, 11, 8], [7, 10, 11, 9], [0, 3, 7, 9, 5, 1], [2, 4, 8, 11, 10, 6]] };
+		
+		polyhedra[8] = { vertex: [[ -0.729665, 0.670121, 0.319155], [ -0.655235, -0.29213, -0.754096], [ -0.093922, -0.607123, 0.537818], [0.702196, 0.595691, 0.485187], [0.776626, -0.36656, -0.588064]], face: [[1, 4, 2], [0, 1, 2], [3, 0, 2], [4, 3, 2], [4, 1, 0, 3]] };
+		
+		polyhedra[9] = { vertex: [[ -0.868849, -0.100041, 0.61257], [ -0.329458, 0.976099, 0.28078], [ -0.26629, -0.013796, -0.477654], [ -0.13392, -1.034115, 0.229829], [0.738834, 0.707117, -0.307018], [0.859683, -0.535264, -0.338508]], face: [[3, 0, 2], [5, 3, 2], [4, 5, 2], [1, 4, 2], [0, 1, 2], [0, 3, 5, 4, 1]] };
+		
+		polyhedra[10] = { vertex: [[ -0.610389, 0.243975, 0.531213], [ -0.187812, -0.48795, -0.664016], [ -0.187812, 0.9759, -0.664016], [0.187812, -0.9759, 0.664016], [0.798201, 0.243975, 0.132803]], face: [[1, 3, 0], [3, 4, 0], [3, 1, 4], [0, 2, 1], [0, 4, 2], [2, 4, 1]] };
+		
+		polyhedra[11] = { vertex: [[ -1.028778, 0.392027, -0.048786], [ -0.640503, -0.646161, 0.621837], [ -0.125162, -0.395663, -0.540059], [0.004683, 0.888447, -0.651988], [0.125161, 0.395663, 0.540059], [0.632925, -0.791376, 0.433102], [1.031672, 0.157063, -0.354165]], face: [[3, 2, 0], [2, 1, 0], [2, 5, 1], [0, 4, 3], [0, 1, 4], [4, 1, 5], [2, 3, 6], [3, 4, 6], [5, 2, 6], [4, 5, 6]] };
+		
+		polyhedra[12] = { vertex: [[ -0.669867, 0.334933, -0.529576], [ -0.669867, 0.334933, 0.529577], [ -0.4043, 1.212901, 0], [ -0.334933, -0.669867, -0.529576], [ -0.334933, -0.669867, 0.529577], [0.334933, 0.669867, -0.529576], [0.334933, 0.669867, 0.529577], [0.4043, -1.212901, 0], [0.669867, -0.334933, -0.529576], [0.669867, -0.334933, 0.529577]], face: [[8, 9, 7], [6, 5, 2], [3, 8, 7], [5, 0, 2], [4, 3, 7], [0, 1, 2], [9, 4, 7], [1, 6, 2], [9, 8, 5, 6], [8, 3, 0, 5], [3, 4, 1, 0], [4, 9, 6, 1]] };
+		
+		polyhedra[13] = { vertex: [[ -0.931836, 0.219976, -0.264632], [ -0.636706, 0.318353, 0.692816], [ -0.613483, -0.735083, -0.264632], [ -0.326545, 0.979634, 0], [ -0.318353, -0.636706, 0.692816], [ -0.159176, 0.477529, -0.856368], [0.159176, -0.477529, -0.856368], [0.318353, 0.636706, 0.692816], [0.326545, -0.979634, 0], [0.613482, 0.735082, -0.264632], [0.636706, -0.318353, 0.692816], [0.931835, -0.219977, -0.264632]], face: [[11, 10, 8], [7, 9, 3], [6, 11, 8], [9, 5, 3], [2, 6, 8], [5, 0, 3], [4, 2, 8], [0, 1, 3], [10, 4, 8], [1, 7, 3], [10, 11, 9, 7], [11, 6, 5, 9], [6, 2, 0, 5], [2, 4, 1, 0], [4, 10, 7, 1]] };
+		
+		polyhedra[14] = { vertex: [[-0.93465, 0.300459, -0.271185], [-0.838689, -0.260219, -0.516017], [-0.711319, 0.717591, 0.128359], [-0.710334, -0.156922, 0.080946], [-0.599799, 0.556003, -0.725148], [-0.503838, -0.004675, -0.969981], [-0.487004, 0.26021, 0.48049], [-0.460089, -0.750282, -0.512622], [-0.376468, 0.973135, -0.325605], [-0.331735, -0.646985, 0.084342], [-0.254001, 0.831847, 0.530001], [-0.125239, -0.494738, -0.966586], [0.029622, 0.027949, 0.730817], [0.056536, -0.982543, -0.262295], [0.08085, 1.087391, 0.076037], [0.125583, -0.532729, 0.485984], [0.262625, 0.599586, 0.780328], [0.391387, -0.726999, -0.716259], [0.513854, -0.868287, 0.139347], [0.597475, 0.85513, 0.326364], [0.641224, 0.109523, 0.783723], [0.737185, -0.451155, 0.538891], [0.848705, -0.612742, -0.314616], [0.976075, 0.365067, 0.32976], [1.072036, -0.19561, 0.084927]], face: [[15, 18, 21], [12, 20, 16], [6, 10, 2], [3, 0, 1], [9, 7, 13], [2, 8, 4, 0], [0, 4, 5, 1], [1, 5, 11, 7], [7, 11, 17, 13], [13, 17, 22, 18], [18, 22, 24, 21], [21, 24, 23, 20], [20, 23, 19, 16], [16, 19, 14, 10], [10, 14, 8, 2], [15, 9, 13, 18], [12, 15, 21, 20], [6, 12, 16, 10], [3, 6, 2, 0], [9, 3, 1, 7], [9, 15, 12, 6, 3], [22, 17, 11, 5, 4, 8, 14, 19, 23, 24]] };
 		
 		var type:Int = options.type != null ? options.type : 0;
 		if (type < 0) {
@@ -2410,6 +2452,84 @@ import com.omnihx3d.utils.typedarray.Int32Array;
 					uvs[u + lu] = uvs[u];
 				}
 		}
+	}
+	
+	public static function ImportVertexData(parsedVertexData:Dynamic, geometry:Geometry) {
+		var vertexData:VertexData = new VertexData();
+		
+		// positions
+		var positions = parsedVertexData.positions;
+		if (positions != null) {
+			vertexData.set(positions, VertexBuffer.PositionKind);
+		}
+		
+		// normals
+		var normals = parsedVertexData.normals;
+		if (normals != null) {
+			vertexData.set(normals, VertexBuffer.NormalKind);
+		}
+		
+		// uvs
+		var uvs = parsedVertexData.uvs;
+		if (uvs != null) {
+			vertexData.set(uvs, VertexBuffer.UVKind);
+		}
+		
+		// uv2s
+		var uv2s = parsedVertexData.uv2s;
+		if (uv2s != null) {
+			vertexData.set(uv2s, VertexBuffer.UV2Kind);
+		}
+		
+		// uv3s
+		var uv3s = parsedVertexData.uv3s;
+		if (uv3s != null) {
+			vertexData.set(uv3s, VertexBuffer.UV3Kind);
+		}
+		
+		// uv4s
+		var uv4s = parsedVertexData.uv4s;
+		if (uv4s != null) {
+			vertexData.set(uv4s, VertexBuffer.UV4Kind);
+		}
+		
+		// uv5s
+		var uv5s = parsedVertexData.uv5s;
+		if (uv5s != null) {
+			vertexData.set(uv5s, VertexBuffer.UV5Kind);
+		}
+		
+		// uv6s
+		var uv6s = parsedVertexData.uv6s;
+		if (uv6s != null) {
+			vertexData.set(uv6s, VertexBuffer.UV6Kind);
+		}
+		
+		// colors
+		var colors = parsedVertexData.colors;
+		if (colors != null) {
+			vertexData.set(Color4.CheckColors4(colors, Std.int(positions.length / 3)), VertexBuffer.ColorKind);
+		}
+		
+		// matricesIndices
+		var matricesIndices = parsedVertexData.matricesIndices;
+		if (matricesIndices != null) {
+			vertexData.set(matricesIndices, VertexBuffer.MatricesIndicesKind);
+		}
+		
+		// matricesWeights
+		var matricesWeights = parsedVertexData.matricesWeights;
+		if (matricesWeights != null) {
+			vertexData.set(matricesWeights, VertexBuffer.MatricesWeightsKind);
+		}
+		
+		// indices
+		var indices = parsedVertexData.indices;
+		if (indices != null) {
+			vertexData.indices = indices;
+		}
+		
+		geometry.setAllVerticesData(vertexData, parsedVertexData.updatable);
 	}
 	
 }

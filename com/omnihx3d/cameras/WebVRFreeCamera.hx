@@ -5,6 +5,11 @@ import com.omnihx3d.math.Vector3;
 import com.omnihx3d.math.Quaternion;
 import com.omnihx3d.cameras.VRCameraMetrics;
 
+#if (js || purejs || web || html5) 
+import js.Browser;
+import js.html.Navigator;
+#end
+
 
 //declare var HMDVRDevice;
 //declare var PositionSensorVRDevice;
@@ -24,12 +29,14 @@ import com.omnihx3d.cameras.VRCameraMetrics;
 		
 		var metrics = VRCameraMetrics.GetDefault();
 		metrics.compensateDistortion = compensateDistortion;
-		this.setCameraRigMode(Camera.RIG_MODE_VR, { vrCameraMetrics: metrics });
+		this.setCameraRigMode(Camera.RIG_MODE_VR, { vrCameraMetrics: metrics } );
+		
+		//this._getWebVRDevices = this._getWebVRDevices.bind(this);
 	}
 	
 	private function _getWebVRDevices(devices:Array<Dynamic>) {
-		var size = devices.length;
-		var i = 0;
+		var size:Int = devices.length;
+		var i:Int = 0;
 		
 		// Reset devices.
 		this._sensorDevice = null;
@@ -46,13 +53,13 @@ import com.omnihx3d.cameras.VRCameraMetrics;
 		i = 0;
 		
 		while (i < size && this._sensorDevice == null) {
-			if (Type.getClassName(Type.getClass(devices[i])) == 'PositionSensorVRDevice' && (!this._hmdDevice || devices[i].hardwareUnitId == this._hmdDevice.hardwareUnitId)) {
+			if (Type.getClassName(Type.getClass(devices[i])) == 'PositionSensorVRDevice' && (this._hmdDevice == null || devices[i].hardwareUnitId == this._hmdDevice.hardwareUnitId)) {
 				this._sensorDevice = devices[i];
 			}
 			i++;
 		}
 		
-		this._vrEnabled = this._sensorDevice && this._hmdDevice ? true : false;
+		this._vrEnabled = this._sensorDevice != null && this._hmdDevice != null ? true : false;
 	}
 	
 	override public function _checkInputs() {
@@ -61,28 +68,30 @@ import com.omnihx3d.cameras.VRCameraMetrics;
 			this._cacheQuaternion.copyFromFloats(this._cacheState.orientation.x, this._cacheState.orientation.y, this._cacheState.orientation.z, this._cacheState.orientation.w);
 			this._cacheQuaternion.toEulerAnglesToRef(this._cacheRotation);
 			
-			this.rotation.x = -this._cacheRotation.z;
+			this.rotation.x = -this._cacheRotation.x;
 			this.rotation.y = -this._cacheRotation.y;
-			this.rotation.z = this._cacheRotation.x;
+			this.rotation.z = this._cacheRotation.z;
 		}
 		
 		super._checkInputs();
 	}
 	
-	override public function attachControl(?element:Dynamic, noPreventDefault:Bool = false, useCtrlForPanning:Bool = false) {
+	override public function attachControl(?element:Dynamic, noPreventDefault:Bool = false, useCtrlForPanning:Bool = false, enableKeyboard:Bool = true) {
 		super.attachControl(element, noPreventDefault);
-		var nav:Dynamic = untyped window.navigator;
-		if (nav.getVRDevices) {
-			nav.getVRDevices().then(this._getWebVRDevices);
+		#if (js || purejs || web || html5) 
+		var nav:Navigator = untyped Browser.window.navigator;
+		if (untyped nav.getVRDevices != null) {
+			untyped nav.getVRDevices().then(this._getWebVRDevices);
 		}
-		else if (nav.mozGetVRDevices) {
-			nav.mozGetVRDevices(this._getWebVRDevices);
+		else if (untyped nav.mozGetVRDevices != null) {
+			untyped nav.mozGetVRDevices(this._getWebVRDevices);
 		}
+		#end
 	}
 	
 	override public function detachControl(?element:Dynamic) {
 		super.detachControl(element);
 		this._vrEnabled = false;
 	}
-		
+	
 }

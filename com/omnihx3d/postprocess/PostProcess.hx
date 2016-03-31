@@ -25,8 +25,8 @@ import com.omnihx3d.utils.GL;
 	public var onAfterRender:Effect->Void;
 	public var onSizeChanged:Void->Void;
 	public var onActivate:Camera->Void;
-	public var width:Float = -1;
-	public var height:Float = -1;
+	public var width:Int = -1;
+	public var height:Int = -1;
 	public var renderTargetSamplingMode:Int;
 	public var clearColor:Color4;
 	
@@ -73,11 +73,11 @@ import com.omnihx3d.utils.GL;
 		this.updateEffect(defines);
 	}
 	
-	public function updateEffect(?defines:String) {
+	public function updateEffect(defines:String = "") {
 		this._effect = this._engine.createEffect({ vertex: "postprocess", fragment: this._fragmentUrl },
 			["position"],
 			this._parameters,
-			this._samplers, defines != null ? defines : "");
+			this._samplers, defines);
 	}
 
 	public function isReusable():Bool {
@@ -86,15 +86,16 @@ import com.omnihx3d.utils.GL;
 
 	public function activate(camera:Camera, ?sourceTexture:WebGLTexture) {
 		camera = camera != null ? camera : this._camera;
-								
+		
 		var scene = camera.getScene();
 		var maxSize = camera.getEngine().getCaps().maxTextureSize;
-		var desiredWidth = (sourceTexture != null ? sourceTexture._width : this._engine.getRenderWidth()) * this._renderRatio;
-        var desiredHeight = (sourceTexture != null ? sourceTexture._height : this._engine.getRenderHeight()) * this._renderRatio;
+		
+		var desiredWidth:Int = Std.int((sourceTexture != null ? sourceTexture._width : this._engine.getRenderWidth()) * this._renderRatio);
+        var desiredHeight:Int = Std.int((sourceTexture != null ? sourceTexture._height : this._engine.getRenderHeight()) * this._renderRatio);
         
-		desiredWidth = this._renderRatio.width != null ? this._renderRatio.width : Tools.GetExponantOfTwo(Std.int(desiredWidth), maxSize);
-		desiredHeight = this._renderRatio.height != null ? this._renderRatio.height : Tools.GetExponantOfTwo(Std.int(desiredHeight), maxSize);
-				     
+		desiredWidth = this._renderRatio.width != null ? this._renderRatio.width : com.omnihx3d.math.Tools.GetExponentOfTwo(Std.int(desiredWidth), maxSize);
+		desiredHeight = this._renderRatio.height != null ? this._renderRatio.height : com.omnihx3d.math.Tools.GetExponentOfTwo(Std.int(desiredHeight), maxSize);
+		
 		if (this.width != desiredWidth || this.height != desiredHeight) {
 			if (this._textures.length > 0) {
 				for (i in 0...this._textures.length) {
@@ -125,7 +126,8 @@ import com.omnihx3d.utils.GL;
 		// Clear
 		if (this.clearColor != null) {
             this._engine.clear(this.clearColor, true, true);
-        } else {
+        } 
+		else {
             this._engine.clear(scene.clearColor, scene.autoClear || scene.forceWireframe, true);
         }
 		
@@ -150,7 +152,7 @@ import com.omnihx3d.utils.GL;
 		this._engine.setAlphaMode(Engine.ALPHA_DISABLE);
 		this._engine.setDepthBuffer(false);
 		this._engine.setDepthWrite(false);
-				
+		
 		// Texture
 		if(this._textures.length > 0) {		
 			this._effect._bindTexture("textureSampler", this._textures.data[this._currentRenderTextureInd]);

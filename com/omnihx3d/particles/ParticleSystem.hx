@@ -9,6 +9,8 @@ import com.omnihx3d.math.Vector3;
 import com.omnihx3d.mesh.WebGLBuffer;
 import com.omnihx3d.particles.Particle;
 import com.omnihx3d.tools.Tools;
+import com.omnihx3d.animations.IAnimatable;
+import com.omnihx3d.animations.Animation;
 
 import com.omnihx3d.utils.typedarray.Float32Array;
 
@@ -18,13 +20,14 @@ import com.omnihx3d.utils.typedarray.Float32Array;
  * @author Krtolica Vujadin
  */
 
-@:expose('BABYLON.ParticleSystem') class ParticleSystem implements IDisposable implements ISmartArrayCompatible {
+@:expose('BABYLON.ParticleSystem') class ParticleSystem implements IDisposable implements ISmartArrayCompatible implements IAnimatable {
 	
 	// Statics
 	public static var BLENDMODE_ONEONE:Int = 0;
 	public static var BLENDMODE_STANDARD:Int = 1;
 
 	// Members
+	public var animations:Array<Animation> = [];
 	public var name:String;
 	public var id:String;
 	public var renderingGroupId:Int = 0;
@@ -320,18 +323,16 @@ import com.omnihx3d.utils.typedarray.Float32Array;
 		this._scaledUpdateSpeed = this.updateSpeed * this._scene.getAnimationRatio();
 		
 		// determine the number of particles we need to create   
-		var emitCout:Int = 0;
+		var newParticles:Int = 0;
 		
 		if (this.manualEmitCount > -1) {
-			emitCout = this.manualEmitCount;
-			this.manualEmitCount = 0;
+			newParticles = this.manualEmitCount;
+			this._newPartsExcess = 0;
 		} 
 		else {
-			emitCout = this.emitRate;
+			newParticles = Math.floor(this.emitRate * this._scaledUpdateSpeed);
+			this._newPartsExcess += Std.int(this.emitRate * this._scaledUpdateSpeed) - newParticles;
 		}
-		
-		var newParticles = Std.int(emitCout * this._scaledUpdateSpeed);
-		this._newPartsExcess += cast emitCout * this._scaledUpdateSpeed - newParticles;
 		
 		if (this._newPartsExcess > 1.0) {
 			newParticles += this._newPartsExcess;
@@ -489,5 +490,107 @@ import com.omnihx3d.utils.typedarray.Float32Array;
 		
         return ((random * (max - min)) + min);
     }
+	
+	public function serialize():Dynamic {
+		var serializationObject:Dynamic = { };
+		
+		serializationObject.name = this.name;
+		
+		// Emitter
+		if (this.emitter.position != null) {
+			serializationObject.emitterId = this.emitter.id;
+		} 
+		else {
+			serializationObject.emitter = this.emitter.asArray();
+		}
+		
+		serializationObject.capacity = this.getCapacity();
+		
+		if (this.particleTexture != null) {
+			serializationObject.textureName = this.particleTexture.name;
+		}
+		
+		// Animations
+		Animation.AppendSerializedAnimations(this, serializationObject);
+		
+		// Particle system
+		serializationObject.minAngularSpeed = this.minAngularSpeed;
+		serializationObject.maxAngularSpeed = this.maxAngularSpeed;
+		serializationObject.minSize = this.minSize;
+		serializationObject.maxSize = this.maxSize;
+		serializationObject.minEmitPower = this.minEmitPower;
+		serializationObject.maxEmitPower = this.maxEmitPower;
+		serializationObject.minLifeTime = this.minLifeTime;
+		serializationObject.maxLifeTime = this.maxLifeTime;
+		serializationObject.emitRate = this.emitRate;
+		serializationObject.minEmitBox = this.minEmitBox.asArray();
+		serializationObject.maxEmitBox = this.maxEmitBox.asArray();
+		serializationObject.gravity = this.gravity.asArray();
+		serializationObject.direction1 = this.direction1.asArray();
+		serializationObject.direction2 = this.direction2.asArray();
+		serializationObject.color1 = this.color1.asArray();
+		serializationObject.color2 = this.color2.asArray();
+		serializationObject.colorDead = this.colorDead.asArray();
+		serializationObject.updateSpeed = this.updateSpeed;
+		serializationObject.targetStopDuration = this.targetStopDuration;
+		serializationObject.textureMask = this.textureMask.asArray();
+		serializationObject.blendMode = this.blendMode;
+		
+		return serializationObject;
+	}
+
+	public static function Parse(parsedParticleSystem:Dynamic, scene:Scene, rootUrl:String):ParticleSystem {
+		var name = parsedParticleSystem.name;
+		
+		var particleSystem = new ParticleSystem(name, parsedParticleSystem.capacity, scene);
+		
+		// Texture
+		if (parsedParticleSystem.textureName != null) {
+			particleSystem.particleTexture = new Texture(rootUrl + parsedParticleSystem.textureName, scene);
+			particleSystem.particleTexture.name = parsedParticleSystem.textureName;
+		}
+		
+		// Emitter
+		if (parsedParticleSystem.emitterId != null) {
+			particleSystem.emitter = scene.getLastMeshByID(parsedParticleSystem.emitterId);
+		} 
+		else {
+			particleSystem.emitter = Vector3.FromArray(parsedParticleSystem.emitter);
+		}
+		
+		// Animations
+        if (parsedParticleSystem.animations != null) {
+            for (animationIndex in 0...parsedParticleSystem.animations.length) {
+                var parsedAnimation = parsedParticleSystem.animations[animationIndex];
+                particleSystem.animations.push(Animation.Parse(parsedAnimation));
+            }
+        }
+		
+		// Particle system
+		particleSystem.minAngularSpeed = parsedParticleSystem.minAngularSpeed;
+		particleSystem.maxAngularSpeed = parsedParticleSystem.maxAngularSpeed;
+		particleSystem.minSize = parsedParticleSystem.minSize;
+		particleSystem.maxSize = parsedParticleSystem.maxSize;
+		particleSystem.minLifeTime = parsedParticleSystem.minLifeTime;
+		particleSystem.maxLifeTime = parsedParticleSystem.maxLifeTime;
+		particleSystem.minEmitPower = parsedParticleSystem.minEmitPower;
+		particleSystem.maxEmitPower = parsedParticleSystem.maxEmitPower;
+		particleSystem.emitRate = parsedParticleSystem.emitRate;
+		particleSystem.minEmitBox = Vector3.FromArray(parsedParticleSystem.minEmitBox);
+		particleSystem.maxEmitBox = Vector3.FromArray(parsedParticleSystem.maxEmitBox);
+		particleSystem.gravity = Vector3.FromArray(parsedParticleSystem.gravity);
+		particleSystem.direction1 = Vector3.FromArray(parsedParticleSystem.direction1);
+		particleSystem.direction2 = Vector3.FromArray(parsedParticleSystem.direction2);
+		particleSystem.color1 = Color4.FromArray(parsedParticleSystem.color1);
+		particleSystem.color2 = Color4.FromArray(parsedParticleSystem.color2);
+		particleSystem.colorDead = Color4.FromArray(parsedParticleSystem.colorDead);
+		particleSystem.updateSpeed = parsedParticleSystem.updateSpeed;
+		particleSystem.targetStopDuration = parsedParticleSystem.targetStopDuration;
+		particleSystem.textureMask = Color4.FromArray(parsedParticleSystem.textureMask);
+		particleSystem.blendMode = parsedParticleSystem.blendMode;
+		particleSystem.start();
+		
+		return particleSystem;
+	}
 	
 }

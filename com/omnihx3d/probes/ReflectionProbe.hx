@@ -11,15 +11,15 @@ import com.omnihx3d.materials.textures.RenderTargetTexture;
  * ...
  * @author Krtolica Vujadin
  */
-class ReflectionProbe {
+@:expose('BABYLON.ReflectionProbe') class ReflectionProbe {
 	
 	private var _scene:Scene;
 	private var _renderTargetTexture:RenderTargetTexture;
-	private var _projectionMatrix: Matrix;
-	private var _viewMatrix = Matrix.Identity();
+	private var _projectionMatrix:Matrix;
+	private var _viewMatrix:Matrix = Matrix.Identity();
 	private var _target = Vector3.Zero();
-	private var _add = Vector3.Zero();
-	private var _attachedMesh: AbstractMesh;
+	private var _add:Vector3 = Vector3.Zero();
+	private var _attachedMesh:AbstractMesh;
 
 	public var position:Vector3 = Vector3.Zero();
 	
@@ -41,22 +41,22 @@ class ReflectionProbe {
 		this._renderTargetTexture.onBeforeRender = function(faceIndex:Int) {
 			switch (faceIndex) {
 				case 0:
-					this._add.copyFromFloats(1, 0, 0);
+					this._add.set(1, 0, 0);
 					
 				case 1:
-					this._add.copyFromFloats(-1, 0, 0);
+					this._add.set(-1, 0, 0);
 					
 				case 2:
-					this._add.copyFromFloats(0, -1, 0);
+					this._add.set(0, -1, 0);
 					
 				case 3:
-					this._add.copyFromFloats(0, 1, 0);
+					this._add.set(0, 1, 0);
 					
 				case 4:
-					this._add.copyFromFloats(0, 0, 1);
+					this._add.set(0, 0, 1);
 					
 				case 5:
-					this._add.copyFromFloats(0, 0, -1);					
+					this._add.set(0, 0, -1);					
 			}
 			
 			if (this._attachedMesh != null) {
@@ -108,7 +108,12 @@ class ReflectionProbe {
 		if (index != -1) {
 			// Remove from the scene if found 
 			this._scene.reflectionProbes.splice(index, 1);
-		}            
+		}  
+		
+		if (this._renderTargetTexture != null) {
+            this._renderTargetTexture.dispose();
+            this._renderTargetTexture = null;
+        }
 	}
 	
 }

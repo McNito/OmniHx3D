@@ -12,13 +12,13 @@ package com.omnihx3d.utils.typedarray;
 
 	typedef Float32Array = snow.api.buffers.Float32Array;
 	
-#elseif lime
-
-	typedef Float32Array = lime.utils.Float32Array;
-	
 #elseif openfl
 
 	typedef Float32Array = openfl.utils.Float32Array;	
+	
+#elseif lime
+
+	typedef Float32Array = lime.utils.Float32Array;
 	
 #elseif nme
 

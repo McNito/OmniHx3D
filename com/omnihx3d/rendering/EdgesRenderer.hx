@@ -8,6 +8,7 @@ import com.omnihx3d.mesh.WebGLBuffer;
 import com.omnihx3d.mesh.VertexBuffer;
 import com.omnihx3d.mesh.AbstractMesh;
 import com.omnihx3d.mesh.VertexBuffer;
+import com.omnihx3d.cameras.Camera;
 
 
 /**
@@ -31,6 +32,9 @@ class FaceAdjacencies {
 }
  
 class EdgesRenderer implements ISmartArrayCompatible {
+	
+	public var edgesWidthScalerForOrthographic:Float = 1000.0;
+	public var edgesWidthScalerForPerspective:Float = 50.0;
 
 	private var _source:AbstractMesh;
 	private var _linesPositions:Array<Float> = [];
@@ -46,7 +50,7 @@ class EdgesRenderer implements ISmartArrayCompatible {
 	private var _buffers:Map<String, VertexBuffer> = new Map();
 	private var _checkVerticesInsteadOfIndices:Bool = false;
 	
-	public var __smartArrayFlags:Array<Int>;
+	public var __smartArrayFlags:Array<Int> = [];
 	
 
 	// Beware when you use this class with complex objects as the adjacencies computation can be really long
@@ -319,7 +323,14 @@ class EdgesRenderer implements ISmartArrayCompatible {
 		
 		scene.resetCachedMaterial();
 		this._lineShader.setColor4("color", this._source.edgesColor);
-		this._lineShader.setFloat("width", this._source.edgesWidth / 50.0);
+		
+		if (scene.activeCamera.mode == Camera.ORTHOGRAPHIC_CAMERA) {
+			this._lineShader.setFloat("width", this._source.edgesWidth / this.edgesWidthScalerForOrthographic);
+		}
+		else {
+			this._lineShader.setFloat("width", this._source.edgesWidth / this.edgesWidthScalerForPerspective);
+		}
+		
 		this._lineShader.setFloat("aspectRatio", engine.getAspectRatio(scene.activeCamera));
 		this._lineShader.bind(this._source.getWorldMatrix());
 		
