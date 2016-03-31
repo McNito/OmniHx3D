@@ -6,7 +6,7 @@
   "description": "OmniHx3D is a modified version of BabylonHx",
   "version": "1.2.0",
   "releasenote": "Initial release, everything is working correctly.",
-  "contributors": ["0xFireball","vujadin"],
+  "contributors": ["0xFireball"],
   "dependencies": {
     "lime": ""
   }
