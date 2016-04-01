@@ -1,0 +1,111 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/lensflares.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.omnihx3d.lensflare.LensFlare;
+import com.omnihx3d.lensflare.LensFlareSystem;
+import com.omnihx3d.lights.PointLight;
+import com.omnihx3d.materials.StandardMaterial;
+import com.omnihx3d.materials.textures.CubeTexture;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.math.Color3;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.Scene;
+
+
+class LensFlares {
+
+	public function new(scene:Scene) {
+		var camera = new ArcRotateCamera("Camera", 0, 0, 10, Vector3.Zero(), scene);
+		camera.attachControl(this);
+		camera.alpha = 2.8;
+		camera.beta = 2.25;
+		
+		var light0 = new PointLight("Omni0", new Vector3(21.84, 50, -28.26), scene);
+		
+		// Creating light sphere
+		var lightSphere0 = Mesh.CreateSphere("Sphere0", 16, 0.5, scene);
+		
+		lightSphere0.material = new StandardMaterial("white", scene);
+		cast(lightSphere0.material, StandardMaterial).diffuseColor = new Color3(0, 0, 0);
+		cast(lightSphere0.material, StandardMaterial).specularColor = new Color3(0, 0, 0);
+		cast(lightSphere0.material, StandardMaterial).emissiveColor = new Color3(1, 1, 1);
+		
+		lightSphere0.position = light0.position;
+		
+		var lensFlareSystem = new LensFlareSystem("lensFlareSystem", light0, scene);
+		var flare00 = new LensFlare(0.2, 0, new Color3(1, 1, 1), "assets/img/lens5.png", lensFlareSystem);
+		var flare01 = new LensFlare(0.5, 0.2, new Color3(0.5, 0.5, 1), "assets/img/lens4.png", lensFlareSystem);
+		var flare02 = new LensFlare(0.2, 1.0, new Color3(1, 1, 1), "assets/img/lens4.png", lensFlareSystem);
+		var flare03 = new LensFlare(0.4, 0.4, new Color3(1, 0.5, 1), "assets/img/flare.png", lensFlareSystem);
+		var flare04 = new LensFlare(0.1, 0.6, new Color3(1, 1, 1), "assets/img/lens5.png", lensFlareSystem);
+		var flare05 = new LensFlare(0.3, 0.8, new Color3(1, 1, 1), "assets/img/lens4.png", lensFlareSystem);
+		
+		// Skybox
+		var skybox = Mesh.CreateBox("skyBox", 100.0, scene);
+		var skyboxMaterial = new StandardMaterial("skyBox", scene);
+		skyboxMaterial.backFaceCulling = false;
+		skyboxMaterial.reflectionTexture = new CubeTexture("assets/img/skybox/skybox", scene);
+		skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+		skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
+		skyboxMaterial.specularColor = new Color3(0, 0, 0);
+		skybox.material = skyboxMaterial;
+		
+		scene.getEngine().runRenderLoop(function () {
+            scene.render();
+        });
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/lensflares.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/ssao.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.omnihx3d.Engine;
+import com.omnihx3d.layer.Layer;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.postprocess.SSAORenderingPipeline;
+import com.omnihx3d.loading.plugins.BabylonFileLoader;
+import com.omnihx3d.Scene;
+
+
+class SSAO {
+
+	public function new(scene:Scene) {
+		var camera = new ArcRotateCamera("Camera", -2.5, 1.0, 200, new Vector3(0, 0, 0), scene);
+		
+		new Layer("background", "assets/img/graygrad.jpg", scene, true);
+		
+		SceneLoader.RegisterPlugin(BabylonFileLoader.plugin);
+		
+		// The first parameter can be used to specify which mesh to import. Here we import all meshes
+		SceneLoader.Append("assets/models/", "SSAOcat.babylon", scene, function (_) {
+			scene.activeCamera = camera;
+			camera.attachControl(this);
+			
+			// Create ssao rendering pipeline
+			/*
+			SSAO is a rendering pipeline, so we have to attach it to cameras
+			The ratio is used by SSAO & Blur post-processes before adding to the
+			original scene color to save performances. It is advised to use a ratio
+			between 0.5 and 0.75 for good results and performances.
+			You can also attach cameras directly by passing an array of Camera to the
+			last parameter.
+			*/
+			
+			var ssao = new SSAORenderingPipeline('ssaopipeline', scene, 0.75);
+			scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssaopipeline", camera);
+
+			Engine.keyDown.push(function (keyCode:Int) {
+				// draw SSAO with scene when pressed "1"
+				if (keyCode == 49) {
+					scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssaopipeline", camera);
+					scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssaopipeline", ssao.SSAOCombineRenderEffect, camera);
+				}
+				// draw without SSAO when pressed "2"
+				else if (keyCode == 50) {
+					scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssaopipeline", camera);
+				}
+				// draw only SSAO when pressed "3"
+				else if (keyCode == 51) {
+					scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssaopipeline", camera);
+					scene.postProcessRenderPipelineManager.disableEffectInPipeline("ssaopipeline", ssao.SSAOCombineRenderEffect, camera);
+				}
+			});
+			
+			scene.getEngine().runRenderLoop(function () {
+				scene.render();
+			});
+		});
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/ssao.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

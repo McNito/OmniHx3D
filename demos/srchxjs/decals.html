@@ -1,0 +1,130 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/decals.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.Engine;
+import com.omnihx3d.layer.Layer;
+import com.omnihx3d.lights.PointLight;
+import com.omnihx3d.materials.StandardMaterial;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.math.Color3;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.Scene;
+import com.omnihx3d.bones.Skeleton;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.mesh.AbstractMesh;
+import com.omnihx3d.particles.ParticleSystem;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.babylonhxext.loaders.obj.ObjLoader;
+
+
+class Decals {
+
+	public function new(scene:Scene) {
+		
+		//light
+		var light = new PointLight("Omni0", new Vector3(-100, 0, 10), scene);
+						
+		var camera = new ArcRotateCamera("Camera", 0, 1.2, 5, Vector3.Zero(), scene);
+		camera.attachControl(this, false);
+		camera.lowerBetaLimit = 0.5;
+		camera.upperBetaLimit = (Math.PI / 2) * 0.9;
+		camera.upperRadiusLimit = 7;
+		camera.lowerRadiusLimit = 2;
+		
+		new Layer("background", "assets/img/graygrad.jpg", scene, true);
+		
+		#if mobile
+		camera.radius = 3.5;
+		#end
+						
+		var objParser = new ObjLoader(scene);
+		objParser.load("assets/models/", "zombie.obj", function(meshes:Array<Mesh>) {
+			var zombie = meshes[0];
+			zombie.rotation.y = Math.PI / 2;
+			
+			var material = new StandardMaterial('zombie', scene);
+			material.diffuseColor = Color3.FromInt(0xb5d3ef);
+			material.specularColor = new Color3(0.07, 0.07, 0.07);
+			material.specularPower = 100;
+			
+			zombie.material = material;
+						
+			camera.target = zombie.position;
+			
+			var decalMaterial = new StandardMaterial("decalMat", scene);
+			cast(decalMaterial, StandardMaterial).diffuseTexture = new Texture("assets/img/bhole.png", scene);
+			cast(decalMaterial, StandardMaterial).diffuseTexture.hasAlpha = true;
+			decalMaterial.zOffset = -1;
+			
+			var onPointerDown = function (x:Int, y:Int, button:Int) {			
+				// check if we are under a mesh
+				var pickInfo = scene.pick(scene.pointerX, scene.pointerY, function (mesh) { return mesh == zombie; });
+				if (pickInfo.hit) {
+					var decalSize = new Vector3(0.03, 0.03, 0.03);
+					
+					var newDecal = Mesh.CreateDecal("decal", zombie, pickInfo.pickedPoint, pickInfo.getNormal(true), decalSize);
+					newDecal.material = decalMaterial;
+				}
+			}
+			
+			Engine.mouseDown.push(onPointerDown);
+				
+			scene.getEngine().runRenderLoop(function () {
+				scene.render();
+			});
+		});	
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/decals.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

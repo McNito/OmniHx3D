@@ -1,0 +1,153 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/particles2.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.omnihx3d.materials.ShadersStore;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.layer.Layer;
+import com.omnihx3d.math.Color4;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.particles.ParticleSystem;
+import com.omnihx3d.Scene;
+
+
+class Particles2 {
+
+	public function new(scene:Scene) {
+		var camera = new ArcRotateCamera("Camera", 0, 0, 10, Vector3.Zero(), scene);
+		camera.attachControl();
+		camera.setPosition(new Vector3(-5, 5, 0));
+		camera.lowerBetaLimit = 0.1;
+		camera.upperBetaLimit = (Math.PI / 2) * 0.95;
+		camera.lowerRadiusLimit = 5;
+		
+		new Layer("background", "assets/img/graygrad.jpg", scene, true);
+		
+		// Emitters
+		var emitter0 = Mesh.CreateBox("emitter0", 0.1, scene);
+		emitter0.isVisible = false;
+		
+		// Custom shader for particles
+		ShadersStore.Shaders["myParticle.fragment"] =
+		"#ifdef GL_ES\n" +
+		"precision highp float;\n" +
+		"#endif\n" +
+		
+		"varying vec2 vUV;\n" +                     
+		"varying vec4 vColor;\n" +                  
+		
+		"uniform sampler2D diffuseSampler;\n" +     
+		"uniform float time;\n" +                   // This one is custom so we need to declare it to the effect
+		
+		"void main(void) {\n" +
+			"vec2 position = vUV;\n" +
+			
+			"float color = 0.0;\n" +
+			"vec2 center = vec2(0.5, 0.5);\n" +
+			
+			"color = sin(distance(position, center) * 10.0+ time * vColor.g);\n" +
+			
+			"vec4 baseColor = texture2D(diffuseSampler, vUV);\n" +
+			
+			"gl_FragColor = baseColor * vColor * vec4( vec3(color, color, color), 1.0 );\n" +
+		"}\n" +
+		"";
+		
+		// Effect
+		var effect = scene.getEngine().createEffectForParticles("myParticle", ["time"]);
+		
+		// Particles
+		var particleSystem = new ParticleSystem("particles", 4000, scene, effect);
+		particleSystem.particleTexture = new Texture("assets/img/flare.png", scene);
+		particleSystem.minSize = 0.1;
+		particleSystem.maxSize = 1.0;
+		particleSystem.minLifeTime = 0.5;
+		particleSystem.maxLifeTime = 5.0;
+		particleSystem.minEmitPower = 0.5;
+		particleSystem.maxEmitPower = 3.0;
+		particleSystem.emitter = emitter0;
+		particleSystem.emitRate = 100;
+		particleSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+		particleSystem.direction1 = new Vector3(-1, 1, -1);
+		particleSystem.direction2 = new Vector3(1, 1, 1);
+		particleSystem.color1 = new Color4(1, 1, 0, 1);
+		particleSystem.color2 = new Color4(1, 0.5, 0, 1);
+		particleSystem.gravity = new Vector3(0, -1.0, 0);
+		particleSystem.start();
+		
+		var time = 0.0;
+		var order = 0.1;
+		
+		scene.registerBeforeRender(function () {
+			// Waiting for effect to be compiled
+			if (effect == null) {
+				return;
+			}
+			
+			effect.setFloat("time", time);
+			
+			time += order;
+			
+			if (time > 100 || time < 0) {
+				order *= -1;
+			}
+		});
+		
+		scene.getEngine().runRenderLoop(function () {
+            scene.render();
+        });
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/particles2.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

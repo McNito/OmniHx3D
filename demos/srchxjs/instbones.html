@@ -1,0 +1,140 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/instbones.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.omnihx3d.lights.DirectionalLight;
+import com.omnihx3d.lights.shadows.ShadowGenerator;
+import com.omnihx3d.loading.plugins.BabylonFileLoader;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.materials.StandardMaterial;
+import com.omnihx3d.materials.textures.CubeTexture;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.math.Color3;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.math.Axis;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.Node;
+import com.omnihx3d.particles.ParticleSystem;
+import com.omnihx3d.mesh.AbstractMesh;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.bones.Skeleton;
+import com.omnihx3d.mesh.InstancedMesh;
+import com.omnihx3d.layer.Layer;
+import com.omnihx3d.Scene;
+
+
+class InstancedBones {
+
+	public function new(scene:Scene) {
+		var light = new DirectionalLight("dir01", new Vector3(0, -0.5, -1.0), scene);
+		var camera = new ArcRotateCamera("Camera", 0, 0, 20, new Vector3(0, 30, 0), scene);
+		camera.attachControl(this);
+		camera.setPosition(new Vector3(20, 70, 120));
+		light.position = new Vector3(50, 250, 200);
+		light.shadowOrthoScale = 2.0;
+		camera.minZ = 1.0;
+		
+		new Layer("background", "assets/img/graygrad.jpg", scene, true);
+		
+		scene.ambientColor = new Color3(0.3, 0.3, 0.3);
+		
+		// Ground
+		var ground = Mesh.CreateGround("ground", 700, 700, 1, scene, false);
+		var groundMaterial = new StandardMaterial("ground", scene);
+		groundMaterial.diffuseColor = new Color3(0.2, 0.2, 0.2);
+		groundMaterial.specularColor = new Color3(0, 0, 0);
+		ground.material = groundMaterial;
+		ground.receiveShadows = true;
+		
+		// Shadows
+		var shadowGenerator = new ShadowGenerator(1024, light);
+		shadowGenerator.usePoissonSampling = true;
+		
+		// Dude
+		SceneLoader.RegisterPlugin(BabylonFileLoader.plugin);
+		SceneLoader.ImportMesh("him", "assets/models/Dude/", "Dude.babylon", scene, function (newMeshes2:Array&lt;AbstractMesh&gt;, particleSystems2:Array&lt;ParticleSystem&gt;, skeletons2:Array&lt;Skeleton&gt;) {
+			var dude = newMeshes2[0];
+			
+			for (index in 1...newMeshes2.length) {
+				shadowGenerator.getShadowMap().renderList.push(newMeshes2[index]);
+			}
+			
+			for (count in 0...10) {
+				var offsetX = 200 * Math.random() - 100;
+				var offsetZ = 200 * Math.random() - 100;
+				for (index in 1...newMeshes2.length) {
+					var instance:InstancedMesh = cast(newMeshes2[index], Mesh).createInstance("instance" + count);
+					
+					instance.parent = newMeshes2[index].parent;
+					instance.position = newMeshes2[index].position.clone();					
+					
+					if (cast(instance.parent, Mesh).subMeshes == null) {
+						instance.position.x += offsetX;
+						instance.position.z -= offsetZ;
+					}
+				}
+			}
+			
+			dude.rotation.y = Math.PI;
+			dude.position = new Vector3(0, 0, -80);
+			
+			scene.beginAnimation(skeletons2[0], 0, 100, true, 1.0);
+			
+			scene.getEngine().runRenderLoop(function () {
+				scene.render();
+			});
+		});
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/instbones.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

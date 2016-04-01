@@ -1,0 +1,120 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/shadows2.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.Scene;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.lights.Light;
+import com.omnihx3d.lights.SpotLight;
+import com.omnihx3d.lights.DirectionalLight;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.loading.plugins.BabylonFileLoader;
+import com.omnihx3d.lights.shadows.ShadowGenerator;
+
+
+class Shadows2 {
+
+	public function new(scene:Scene) {
+						
+		SceneLoader.RegisterPlugin(BabylonFileLoader.plugin);
+		SceneLoader.Load("assets/scenes/", "shadows.babylon", scene.getEngine(), function(s:Scene) {
+			scene = s;
+			scene.activeCamera.attachControl();
+			scene.getMeshByName("Cube").material.alpha = 1;
+			scene.getMeshByName("Cube").receiveShadows = true;
+			
+			var star:Mesh = cast(scene.getMeshByName("star1"), Mesh);
+			star.material.alpha = 1;
+			
+			var light1:SpotLight = cast scene.lights[0];
+						
+			var shadowGenerator1 = new ShadowGenerator(1024, light1);
+			shadowGenerator1.getShadowMap().renderList.push(star);
+			shadowGenerator1.useBlurVarianceShadowMap = true;
+			shadowGenerator1.blurBoxOffset = 2.0;
+			
+			var light2:SpotLight = cast scene.lights[1];
+						
+			var shadowGenerator2 = new ShadowGenerator(1024, light2);
+			shadowGenerator2.getShadowMap().renderList.push(star);
+			shadowGenerator2.useBlurVarianceShadowMap = true;
+			shadowGenerator2.blurBoxOffset = 2.0;
+			
+			var light3:SpotLight = cast scene.lights[2];
+						
+			var shadowGenerator3 = new ShadowGenerator(1024, light3);
+			shadowGenerator3.getShadowMap().renderList.push(star);
+			shadowGenerator3.useBlurVarianceShadowMap = true;
+			shadowGenerator3.blurBoxOffset = 2.0;
+					
+			var alpha = 0.0;
+			s.registerBeforeRender(function() {
+				star.rotation.x += 0.01;
+				star.rotation.z += 0.01;
+				
+				star.position.y += Math.sin(alpha) / 20;
+						
+				alpha += 0.02;
+			});
+			
+			new DirectionalLight("dir01", new Vector3(0, -0.5, -1.0), scene);
+							
+			s.getEngine().runRenderLoop(function () {
+				s.render();
+			});
+		});	
+		
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/shadows2.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>

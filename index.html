@@ -1,57 +1,1253 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="OmniHx3D : A modified version of BabylonHx">
+<head>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-    <title>OmniHx3D</title>
-  </head>
+    <title>OmniHx3D - Cross-Platform 3D Engine</title>
 
-  <body>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/exaphaser/OmniHx3D">View on GitHub</a>
+    <!-- Custom CSS -->
+    <link href="css/agency.css" rel="stylesheet">
 
-          <h1 id="project_title">OmniHx3D</h1>
-          <h2 id="project_tagline">A modified version of BabylonHx</h2>
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700' rel='stylesheet' type='text/css'>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/exaphaser/OmniHx3D/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/exaphaser/OmniHx3D/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
+    <script src="js/BabylonHx_Lime.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body id="page-top" class="index">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="#page-top"><img src="img/logos/omnihx3d.png" alt="OmniHx3D logo" /></a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#page-top">Home</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#about">About</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#download">Download</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#portfolio">Examples</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <!-- Header -->
+    <header>
+        <div id="content" style="width: 100%; height: 100%; position: absolute; top: 0px; left: 0px;"></div>
+        <div class="container" style="position: relative;">
+            <div class="intro-text">
+                <div class="intro-lead-in">Cross-Platform 3D Engine</div>
+                <div id="platformlogos"><img src="img/logos/platforms.png" alt="Platforms supported by OmniHx3D" /></div>
+                <div class="intro-heading">Powered by <a target="_blank" href="http://haxe.org/">Haxe&nbsp;<span class="haxe-logo-s"></span></a></div>
+                <a href="#about" class="page-scroll btn btn-xl">Explore</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container" style="background: url(img/transblack.png); padding-top: 20px; color: #eee; border-radius: 5px;">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <br/><br/>
+                    <h2 class="section-heading">About/Walkthrough</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h4 class="section-heading">What is OmniHx3D?</h4>
+                    <br/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>
+                        OmniHx3D is a fork of BabylonHx, which is an ultra-portable lightweight 3D engine.<br/>It is a port of the excellent <a href="http://www.babylonjs.com/" target="_blank">BabylonJS</a> 3D engine to the <a href="http://haxe.org/"
+                            target="_blank">Haxe</a> programming language.
+                    </p>
+                    <p>
+                        This Haxe port allows the Babylon 3D engine to run natively on all platforms, running on one of multiple Haxe graphics backends.
+                    </p>
+                    <p>
+                        OmniHx3D is compatible with three major Haxe libraries/frameworks for cross-platform development and graphics backends: <a href="http://www.openfl.org/" target="_blank">Lime/OpenFL</a>, <a target="_blank" href="http://nmehost.com/nme/">NME</a>                        and <a target="_blank" href="http://snowkit.org/">Snow</a>.<br /> With OmniHx3D, you can create native games for these platforms and more: Windows, Mac, Linux, iOS, Android, BlackBerry, FirefoxOS, Tizen, HTML5..., all from a single
+                        code base!
+                    </p>
+                    <p>
+                        <br/> OmniHx3D is especially flexible when it comes to building for the web.There are three ways to build for the web:<br/>
+                        <ul>
+                            <li> You can use it in your Lime/OpenFl or Snow project and build for JS/HTML5 just like for any other target supported by these graphics frameworks.<br/></li>
+                            <li> When targeting the web only, OmniHx3D can work with no dependency on external libraries at all.<br/> Simply create Haxe JS project and build it by passing "purejs" parameter to Haxe compiler.</li>
+                            <li> Finally, you can compile the OmniHx3D engine to a JS file and then use it from JavaScript in exactly the same way you would use the original BabylonJS engine. In fact, you can simply replace the original babylon.js file in
+                                an existing BabylonJS javascript project with the babylon.js file compiled from OmniHx3D and everything will work perfectly.</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <br/><br/>
+                    <h4 class="section-heading">Why OmniHx3D?</h4>
+                    <br/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>
+                        The primary reason for doing this port was a practical need for a cross-platform 3D engine. A true 'code once, run everywhere' solution - achieved with OmniHx3D
+                    </p>
+                    <p>
+                        Another reason was was curiosity. Not to see if it can be done but too see how far I can go with Haxe. It turns out that I can go as far as I wish.<br/>With Haxe, there are no limits!
+                    </p>
+                    <p>
+                        OmniHx3D is WIP, its not 'feature complete' (compared to the original JS version) but is very close. It will likely cover your current needs; however, some elements are still missing (or need to be fixed), especially on C++ targets.
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <br/><br/>
+                    <h4 id="get-started" class="section-heading">How do I get started?</h4>
+                    <br/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>
+                        To get started working with OmniHx3D, first you need to install <a href="http://haxe.org/download/" target="_blank">the Haxe compiler and NekoVM</a>. That will also install the Haxe library manager "haxelib" which you will use
+                        to install the necessary libraries/frameworks.
+                    </P>
+                    <p>
+                        Then you'll have to install runtime files for C++ backend for Haxe - HXCPP, execute from command line:
+                    </p>
+                    <pre>haxelib install hxcpp</pre>
+                    <p>
+                        <br/> After that, you can choose one of the three fantastic Haxe libraries/frameworks:<br/><br/> Lime/OpenFL <a href="http://www.openfl.org/" target="_blank">http://www.openfl.org/</a><br/> NME <a href="http://nmehost.com/nme/">http://nmehost.com/nme/</a><br/>                        Snow <a href="http://snowkit.org/">http://snowkit.org/</a><br/><br/> or you can install all of them. OmniHx3D is compatible with all three.<br/><br/> Personally, I recommend <a href="http://www.openfl.org/" target="_blank">Lime/OpenFl</a>.
+                    </p>
+                    <p>
+                        To start with Lime execute from the command line:
+                    </p>
+                    <pre>haxelib install lime</pre>
+                    <p>
+                        Next, set up lime:
+                    </p>
+                    <pre>haxelib run lime setup</pre>
+                    <p>
+                        <br/> When Lime is installed and configured you will need to install the build tools for each platform you wish to build OmniHx3D for; if you want to build for Windows you need to run:
+                    </p>
+                    <pre>haxelib run lime setup windows</pre>
+                    <p>
+                        This will set up Visual Studio and the Microsoft Build tools. Each platform has a similar set up process; for example, for Android:
+                    </p>
+                    <pre>haxelib run lime setup android</pre>
+                    <p>
+                        This command will download the Android SDK and NDK and Ant (and Java JDK if not present).<br/>You should accept the default locations that the installer will offer.<br/> For the web (JS/HTML5) target, no additional software is
+                        required.
+                    </p>
+                    <p>
+                        <br/> Finally, you can install OmniHx3D with the following command, which will also install dependecies <code>actuate</code>, <code>poly2trix</code>. It will also offer to install lime:
+                    </p>
+                    <pre>haxelib install OmniHx3D</pre>
+                    <p>
+                        You now have the tools required to run and create OmniHx3D projects.
+                    </p>
+                    <h2 id="demo-project">Sample project/template</h2>
+                    <p>
+                        <br/>To run the sample project and get a template, download the sample project repository from <a href="https://github.com/exaphaser/OmniHx3D-WhatCubes" target="_blank">https://github.com/exaphaser/OmniHx3D-WhatCubes</a> and navigate
+                        to the root of the repository.<br/>Then run from the command line:
+                    </p>
+                    <pre>haxelib run lime test project.xml html5</pre>
+                    <p>
+                        This should build a sample called "WhatCubes" sample and run it in your browser.
+                    </p>
+                    <p>
+                        <br/> You can also build for Windows/OS X by changing the build target <strong>(you need a Mac to build for Mac or iOS)</strong>:
+                    </p>
+                    <pre>haxelib run lime test project.xml windows</pre>
+                    <pre>haxelib run lime test project.xml mac</pre>
+                    <p>
+                        <br/> Note that the WhatCubes demo includes cursor locking, which does not work on mobile; however, you can remove this code and run WhatCubes on Android/iOS with:
+                    </p>
+                    <pre>haxelib run lime test project.xml android</pre>
+                    <pre>haxelib run lime test project.xml ios</pre>
+                    <p>
+                        <br/>
+                        <p>If you wish, you can also install NME and Snow:
+                            <p>
+                                <pre>haxelib install nme</pre>
+                                <pre>haxelib git snow https://github.com/underscorediscovery/snow.git</pre>
+                                <p>For Snow you'll also need to install Flow which is used to build Snow projects:</p>
+                                <pre>haxelib git flow https://github.com/underscorediscovery/flow.git</pre>
+                                <br/>
+
+                                <!--
+                                <p>
+                                    Then, to build for NME run:
+                                </p>
+                                <pre>haxelib run nme build build.nmml android</pre><br/>
+                                <p>
+                                    And for Snow:
+                                </p>
+                                <pre>haxelib run flow build android</pre><br/>
+                                -->
+
+                                <p>
+                                    You should now be ready to start with OmniHx3D!<br/>
+                                </p>
+                            </p>
+                        </p>
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <br/>
+                    <h4 class="section-heading">Documentation</h4>
+                    <br/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>
+                        Find out about the Babylon3D engine on its web site <a href="http://www.babylonjs.com/" target="_blank">http://www.babylonjs.com/</a>.
+                    </p>
+                    <p>
+                        Documentation can be found here: <a href="http://doc.babylonjs.com/" target="_blank">http://doc.babylonjs.com/</a>
+                    </p>
+                    <br/><br/><br/>
+                    <p style="text-align: center;">
+                        <a href="#portfolio" class="page-scroll btn btn-xl">Show me some examples</a>
+                        <br/><br/><br/>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="download">
+        <div class="container" style="background: url(img/transblack.png); padding-top: 20px; color: #eee; border-radius: 5px;">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <br/><br/>
+                    <h2 class="section-heading">Download/Install</h2>
+                    <br/>
+                </div>
+            </div>
+            <div class="row" style="padding: 0px 20px 50px 20px;">
+                <p>
+                    OmniHx3D is an open-source project available on GitHub at <a href="https://github.com/exaphaser/OmniHx3D" target="_blank">https://github.com/exaphaser/OmniHx3D</a>.
+                    Users new to Haxe should click the below button for detailed, step-by-step instructions on running your first OmniHx3D project.
+                </p>
+                <br/><br/>
+                <p style="text-align: center;">
+                    <a href="#get-started" class="page-scroll btn btn-xl">Users new to Haxe: Set up Haxe</a>
+                    <br/><br/><br/>
+                </p>
+                <p>Experienced Haxe users can install with</p>
+                <pre>haxelib install OmniHx3D</pre><br/><br/>
+                <p style="text-align: center;">
+                    <a href="#demo-project" class="page-scroll btn btn-xl">Demo/Template Project Instructions</a>
+                    <br/><br/><br/>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Grid Section -->
+    <section id="portfolio" class="bg-light-gray">
+        <div class="container">
+            <!-- <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Examples</h2>
+                    <h3 class="section-subheading text-muted"></h3>
+                </div>
+            </div> -->
+            <div class="row">
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_basicscene_modal" id="demo_basicscene" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/basicscene.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Basic Scene</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/basicscene.apk">basicscene.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/basicscene_win.7z">basicscene_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_basicscene" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_basicelements_modal" id="demo_basicelements" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/basicelements.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Basic elements</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/basicselements.apk">basicselements.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/basicselements_win.7z">basicselements_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_basicelements" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_rotationandscaling_modal" id="demo_rotationandscaling" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/rotationandscaling.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Rotation and scaling</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/rotationandscaling.apk">rotationandscaling.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/rotationandscaling_win.7z">rotationandscaling_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_rotationandscaling" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_animations_modal" id="demo_animations" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/animations.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Animations</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/animations.apk">animations.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/animations_win.7z">animations_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_animations" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_easingfunctions_modal" id="demo_easingfunctions" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/easingfunctions.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Easing Functions</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/easing.apk">easing.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/easing_win.7z">easing_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_easing" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_lights_modal" id="demo_lights" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/lights.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Lights</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/lights.apk">lights.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/lights_win.7z">lights_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_lights" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_materials_modal" id="demo_materials" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/materials.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Materials</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/materials.apk">materials.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/materials_win.7z">materials_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_materials" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_bumpmap_modal" id="demo_bumpmap" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/bumpmap.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Bump map</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/bumpmap.apk">bumpmap.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/bumpmap_win.7z">bumpmap_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_bumpmap" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_fog_modal" id="demo_fog" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/fog.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Fog</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/fog.apk">fog.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/fog_win.7z">fog_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_fog" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_environment_modal" id="demo_environment" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/environment.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Environment</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/environment.apk">environment.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/environment_win.7z">environment_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_environment" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_extrusion_modal" id="demo_extrusion" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/extrusion.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Extrusion</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/extrusion.apk">extrusion.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/extrusion_win.7z">extrusion_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_extrusion" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_polygonmesh1_modal" id="demo_polygonmesh1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/polygonmesh1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Polygon mesh 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh1.apk">polymesh1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh1_win.7z">polymesh1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_polygonmesh1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_polygonmesh2_modal" id="demo_polygonmesh2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/polygonmesh2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Polygon mesh 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh2.apk">polymesh2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh2_win.7z">polymesh2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_polygonmesh2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_polygonmesh3_modal" id="demo_polygonmesh3" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/polygonmesh3.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Polygon mesh 3</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh3.apk">polymesh3.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/polymesh3_win.7z">polymesh3_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_polygonmesh3" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_particles1_modal" id="demo_particles1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/particles1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Particles 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles1.apk">particles1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles1.7z">particles1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_particles1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_particles2_modal" id="demo_particles2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/particles2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Particles 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles2.apk">particles2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles2.7z">particles2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_particles2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_particles3_modal" id="demo_particles3" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/particles3.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Particles 3</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles3.apk">particles3.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/particles3.7z">particles3_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_particles3" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_csg_modal" id="demo_csg" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/csg.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>CSG</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/csg.apk">csg.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/csg_win.7z">csg_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_csg" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_fresnel_modal" id="demo_fresnel" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/fresnel.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Fresnel</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/fresnel.apk">fresnel.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/fresnel_win.7z">fresnel_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_fresnel" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_bones_modal" id="demo_bones" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/bones.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Bones</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/bones.apk">bones.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/bones_win.7z">bones_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_bones" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_instancedbones_modal" id="demo_instancedbones" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/instancedbones.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Instanced Bones</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/instbones.apk">instbones.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/instbones_win.7z">instbones_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_instbones" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_instances1_modal" id="demo_instances1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/instances1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Instances 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/instances1.apk">instances1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/instances1_win.7z">instances1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_instances1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_instances2_modal" id="demo_instances2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/instances2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Instances 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/instances2.apk">instances2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/instances2_win.7z">instances2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_instances2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_lensflares_modal" id="demo_lensflares" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/lensflares.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Lens flares</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/lensflares.apk">lensflares.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/lensflares_win.7z">lensflares_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_lensflares" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_lines1_modal" id="demo_lines1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/lines1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Lines 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/lines1.apk">lines1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/lines1_win.7z">lines1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_lines1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_lines2_modal" id="demo_lines2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/lines2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Lines 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/lines2.apk">lines2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/lines2_win.7z">lines2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_lines2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_intersections_modal" id="demo_intersections" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/intersections.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Intersections</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/intersections.apk">intersections.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/intersections_win.7z">intersections_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_intersections" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_proceduraltextures_modal" id="demo_proceduraltextures" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/proceduraltextures.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Procedural textures</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/proceduraltextures.apk">proceduraltextures.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/proceduraltextures_win.7z">proceduraltextures_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_proceduraltextures" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_heightmap_modal" id="demo_heightmap" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/heightmap.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Heightmap</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/heightmap.apk">heightmap.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/heightmap_win.7z">heightmap.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_heightmap" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_decals_modal" id="demo_decals" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/decals.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Decals</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/decals.apk">decals.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/decals_win.7z">decals_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_decals" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_displacementmap_modal" id="demo_displacementmap" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/displacementmap.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Displacement map</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/dispmap.apk">dispmap.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/dispmap_win.7z">dispmap_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_dispmap" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_physicsoimohx1_modal" id="demo_physicsoimohx1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/physicsoimohx1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Physics with OimoHx 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/physoimohx1.apk">physoimohx1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/physoimohx1_win.7z">physoimohx1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_physicsoimohx1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_physicsoimohx2_modal" id="demo_physicsoimohx2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/physicsoimohx2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Physics with OimoHx 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/physoimohx2.apk">physoimohx2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/physoimohx2_win.7z">physoimohx2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_physicsoimohx2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_shadows1_modal" id="demo_shadows1" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/shadows1.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Shadows 1</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/shadows1.apk">shadows1.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/shadows1_win.7z">shadows1_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_shadows1" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_shadows2_modal" id="demo_shadows2" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/shadows2.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Shadows 2</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/shadows2.apk">shadows2.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/shadows2_win.7z">shadows2_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_shadows2" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_godrays_modal" id="demo_godrays" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/godrays.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>God rays</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/godrays.apk">godrays.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/godrays_win.7z">godrays_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_godrays" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_ribbon_modal" id="demo_ribbon" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/ribbon.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Ribbon</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/ribbon.apk">ribbon.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/ribbon_win.7z">ribbon_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_ribbon" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_refraction_modal" id="demo_refraction" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/refraction.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Refraction</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/refraction.apk">refraction.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/refraction_win.7z">refraction_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_refraction" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_convolution_modal" id="demo_convolution" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/convolution.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Convolution</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/convolution.apk">convolution.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/convolution_win.7z">convolution_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_convolution" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_bloom_modal" id="demo_bloom" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/bloom.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Bloom</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/bloom.apk">bloom.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/bloom_win.7z">bloom_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_bloom" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_cellshading_modal" id="demo_cellshading" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/cellshading.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Cell shading</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/cellshading.apk">cellshading.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/cellshading_win.7z">cellshading_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_cellshading" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_customrendertarget_modal" id="demo_customrendertarget" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/customrendertarget.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Custom render target</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/customrtarget.apk">customrtarget.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/customrtarget_win.7z">customrtarget_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_customrtarget" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_loadobj_modal" id="demo_loadobj" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/loadobj.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Load .obj file</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadobj.apk">loadobj.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadobj_win.7z">loadobj_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_loadobj" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_loadstl_modal" id="demo_loadstl" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/loadstl.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Load .stl file</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadstl.apk">loadstl.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadstl_win.7z">loadstl_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_loadstl" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_loadply_modal" id="demo_loadply" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/loadply.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>Load .ply file</h4>
+                        <p class="text-muted android-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadply.apk">loadply.apk</a></p>
+                        <p class="text-muted win-logo-mini"><a href="http://babylonhx.com/demos/binaries/loadply_win.7z">loadply_win.7z</a></p>
+                        <p class="viewsource script-code"><a href="#src_loadply" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 portfolio-item">
+                    <a href="#demo_ssao_modal" id="demo_ssao" class="portfolio-link" data-toggle="modal">
+                        <div class="portfolio-hover">
+                            <div class="portfolio-hover-content">
+                                <i class="fa fa-plus fa-3x"></i>
+                            </div>
+                        </div>
+                        <img src="http://babylonhx.com/demos/ssao.jpg" class="img-responsive" alt="">
+                    </a>
+                    <div class="portfolio-caption">
+                        <h4>SSAO</h4>
+                        <p class="text-muted android-logo-mini" style="text-decoration: line-through;">ssao.apk</p>
+                        <p class="text-muted win-logo-mini" style="text-decoration: line-through;">ssao_win.7z</p>
+                        <p class="viewsource script-code"><a href="#src_ssao" class="portfolio-link" data-toggle="modal">view source</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="container" style="background: url(img/transblack.png); padding-bottom: 40px; padding-top: 20px; border-radius: 5px;">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <br><br>
+                    <div class="contact-left">
+                        <br/><br/><br/>
+                        <ul class="soc_icons">
+                            <li><a target="_blank" href="https://twitter.com/gamestudiohx"><i class="icon_2"></i><span>@gamestudiohx </span> </a></li>
+                            <li><a href="mailto:vujadin.krtolica@gmail.com"><i class="icon_4"></i><span>vujadin.krtolica at gmail dot com</span> </a></li>
+                            <li><a target="_blank" href="https://www.facebook.com/krtolica.vujadin"><i class="icon_5"></i><span>Facebook </span> </a></li>
+                            <li><a target="_blank" href="https://github.com/vujadin"><i class="icon_6"></i><span>GitHub </span> </a></li>
+                        </ul>
+                    </div>
+                    <br><br><br><br><br><br><br><br><br><br><br><br> <br>
+                </div>
+            </div>
+            <br />
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-lg-12 text-center">
+                        <h2 class="section-heading">Send me a message</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <form name="sentMessage" id="contactForm" novalidate>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" placeholder="Your Name *" id="name" required data-validation-required-message="Please enter your name.">
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="email" class="form-control" placeholder="Your Email *" id="email" required data-validation-required-message="Please enter your email address.">
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea class="form-control" placeholder="Your Message *" id="message" required data-validation-required-message="Please enter a message."></textarea>
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                                <div class="col-lg-12 text-center">
+                                    <div id="success"></div>
+                                    <button type="submit" class="btn btn-xl">Send Message</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <span class="copyright">ExaPhaser Industries - 2015-2016</span>
+                </div>
+                <div class="col-md-4">
+                    <ul class="list-inline social-buttons">
+                        <li><a href="https://twitter.com/gamestudiohx"><i class="fa fa-twitter"></i></a>
+                        </li>
+                        <li><a href="https://www.facebook.com/krtolica.vujadin"><i class="fa fa-facebook"></i></a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <ul class="list-inline quicklinks">
+                        <li><a target="_blank" href="http://haxe.org/">Haxe.org</a>
+                        </li>
+                        <li><a target="_blank" href="http://www.babylonjs.com/">BabylonJS.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- demo Modals -->
+
+    <div class="portfolio-modal modal" id="demo_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div style="width: 100%; height: 100%; position: absolute; top: 0px;">
+                <iframe src="#" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                    <div class="lr2">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
-<a id="omnihx3d" class="anchor" href="#omnihx3d" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>OmniHx3D</h1>
+    <a href="https://github.com/exaphaser/OmniHx3D"><img style="position: fixed; z-index: 9999; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67"
+            alt="Fork me on GitHub" data-canonical-src="..s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
 
-<p>A modified version of BabylonHx</p>
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
 
-<h2>
-<a id="install" class="anchor" href="#install" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Install</h2>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.js"></script>
 
-<p><code>haxelib install OmniHx3D</code></p>
-      </section>
-    </div>
+    <!-- Plugin JavaScript -->
+    <script src="cache/cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+    <script src="js/classie.js"></script>
+    <script src="js/cbpAnimatedHeader.js"></script>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">OmniHx3D maintained by <a href="https://github.com/exaphaser">exaphaser</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
+    <!-- Contact Form JavaScript -->
+    <script src="js/jqBootstrapValidation.js"></script>
+    <script src="js/contact_me.js"></script>
 
-    
+    <!-- Custom Theme JavaScript -->
+    <script src="js/agency.js"></script>
 
-  </body>
+    <script type="text/javascript">
+        $(function() {
+            if (window.location.hash) {
+                var pathToDemo = window.location.hash.substring(1);
+                if (pathToDemo.startsWith('demo_')) {
+                    pathToDemo = pathToDemo.replace('demo_', '');
+                    pathToDemo = pathToDemo.replace('_modal', '');
+                    $('iframe', $('#demo_modal')).attr('src', 'http://babylonhx.com/demos/' + pathToDemo + '/index.html');
+                    $('#demo_modal').show().animate({
+                        'opacity': 1
+                    }, function() {
+
+                    });
+                }
+            }
+
+            $(document).on('scroll', function() {
+                if ($(this).scrollTop() > window.innerHeight) {
+                    _isMainPageVisible_ = false;
+                } else {
+                    _isMainPageVisible_ = true;
+                }
+            });
+
+            var content = document.getElementById("content");
+            content.style.position = "absolute";
+            content.width = window.innerWidth;
+            content.height = window.innerHeight;
+            content.style.width = window.innerWidth + "px";
+            content.style.height = window.innerHeight + "px";
+            lime.embed("content", window.innerWidth, window.innerHeight, "FFFFFF");
+            var platformlogos = document.getElementById("platformlogos");
+            platformlogos.style.marginBottom = (window.innerHeight / 2.2) + "px";
+
+            $('div.close-modal').click(function() {
+                $('body').css({
+                    'overflow-y': 'auto'
+                });
+                var _par = $(this).parent().find('iframe');
+                $('#demo_modal').animate({
+                    'opacity': 0
+                }, function() {
+                    _par.attr('src', '');
+                    $(this).hide();
+                });
+            });
+
+            $('.portfolio-link').click(function() {
+                $('body').css({
+                    'overflow-y': 'hidden'
+                });
+
+                if ($(this).attr('id')) {
+                    var pathToDemo = $(this).attr('id');
+                    pathToDemo = pathToDemo.replace('demo_', '');
+                    pathToDemo = pathToDemo.replace('_modal', '');
+                    $('iframe', $('#demo_modal')).attr('src', 'http://babylonhx.com/demos/' + pathToDemo + '/index.html');
+                    $('#demo_modal').show().animate({
+                        'opacity': 1
+                    }, function() {
+
+                    });
+                } else {
+                    var pathToSource = $(this).attr('href');
+                    pathToSource = pathToSource.replace('#src_', '');
+                    var srciFrame = $('iframe', $('#demo_modal'));
+                    srciFrame.attr('src', 'demos/srchxjs/' + pathToSource + '.html');
+                    $('#demo_modal').show().animate({
+                        'opacity': 1
+                    }, function() {
+
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+
+<!-- Mirrored from babylonhx.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 31 Mar 2016 22:13:45 GMT -->
+
 </html>

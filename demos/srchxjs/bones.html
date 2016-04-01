@@ -1,0 +1,138 @@
+<!doctype html>
+
+<html lang="en">
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/bones.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+<head>
+  <meta charset="utf-8">
+
+  <title>BabylonHx</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="styles/github.css">
+  <style>
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		background: url('../../img/abstract3d.jpg') center center fixed;
+	}
+	pre {
+		width: 100%;
+		max-width: 1170px;
+		height: 100%;
+		position: relative;
+		margin: auto;
+		overflow: auto;
+	}
+	code {
+		padding-top: 2% !important;
+		padding-left: 20px !important;
+		padding-bottom: 40px !important;
+	}
+  </style>
+</head>
+
+<body>
+	<pre><code class="haxe">package samples;
+
+import com.omnihx3d.cameras.ArcRotateCamera;
+import com.omnihx3d.lights.DirectionalLight;
+import com.omnihx3d.lights.shadows.ShadowGenerator;
+import com.omnihx3d.loading.plugins.BabylonFileLoader;
+import com.omnihx3d.loading.SceneLoader;
+import com.omnihx3d.materials.StandardMaterial;
+import com.omnihx3d.materials.textures.Texture;
+import com.omnihx3d.layer.Layer;
+import com.omnihx3d.math.Color3;
+import com.omnihx3d.math.Vector3;
+import com.omnihx3d.mesh.Mesh;
+import com.omnihx3d.Scene;
+
+
+class Bones {
+
+	public function new(scene:Scene) {
+		var light = new DirectionalLight("dir01", new Vector3(0, -0.5, -1.0), scene);
+		var camera = new ArcRotateCamera("Camera", 0, 0, 10, new Vector3(0, 30, 0), scene);
+		camera.setPosition(new Vector3(20, 70, 120));
+		camera.attachControl(this);
+		light.position = new Vector3(20, 150, 70);
+		camera.minZ = 10.0;
+		
+		new Layer("background", "assets/img/graygrad.jpg", scene, true);
+				
+		// Ground
+		var ground = Mesh.CreateGround("ground", 1000, 1000, 1, scene, false);
+		var groundMaterial = new StandardMaterial("ground", scene);
+		groundMaterial.diffuseColor = new Color3(0.3, 0.3, 0.3);
+		groundMaterial.specularColor = new Color3(0, 0, 0);
+		ground.material = groundMaterial;
+		ground.receiveShadows = true;
+		
+		// Shadows
+		var shadowGenerator = new ShadowGenerator(1024, light);
+		
+		SceneLoader.RegisterPlugin(BabylonFileLoader.plugin);
+		
+		// Meshes
+		SceneLoader.ImportMesh("Rabbit", "assets/models/Rabbit/", "Rabbit.babylon", scene, function(newMeshes, particleSystems, skeletons) {
+			var rabbit = newMeshes[1];
+						
+			rabbit.scaling = new Vector3(0.4, 0.4, 0.4);			
+			
+			var rabbit2 = rabbit.clone("rabbit2");
+			var rabbit3 = rabbit.clone("rabbit3");
+			
+			rabbit2.position = new Vector3(-50, 0, -20);
+			rabbit2.skeleton = rabbit.skeleton.clone("clonedSkeleton");
+			
+			rabbit3.position = new Vector3(50, 0, -20);
+			rabbit3.skeleton = rabbit.skeleton.clone("clonedSkeleton2");
+			
+			scene.beginAnimation(skeletons[0], 0, 100, true, 0.8);
+			scene.beginAnimation(rabbit2.skeleton, 73, 100, true, 0.8);
+			scene.beginAnimation(rabbit3.skeleton, 0, 72, true, 0.8);
+						
+			// Dude
+			SceneLoader.ImportMesh("him", "assets/models/Dude/", "Dude.babylon", scene, function (newMeshes, particleSystems, skeletons) {
+				var dude = newMeshes[0];
+				
+				for (index in 0...newMeshes.length) {
+					shadowGenerator.getShadowMap().renderList.push(newMeshes[index]);
+				}
+				
+				dude.rotation.y = Math.PI;
+				dude.position = new Vector3(0, 0, -80);
+					
+				scene.beginAnimation(skeletons[0], 0, 100, true, 1.0);
+				
+				scene.getEngine().runRenderLoop(function () {
+					scene.render();
+				});
+			});			
+			
+			shadowGenerator.getShadowMap().renderList.push(rabbit);
+			shadowGenerator.getShadowMap().renderList.push(rabbit2);
+			shadowGenerator.getShadowMap().renderList.push(rabbit3);
+			
+		});
+	}
+	
+}
+</code></pre>
+
+  <script src="highlight.pack.js"></script>  
+  <script>
+	hljs.configure({
+	  tabReplace: '    ' // 4 spaces
+	})
+	hljs.initHighlightingOnLoad();
+  </script>
+</body>
+
+<!-- Mirrored from babylonhx.com/demos/srchxjs/bones.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 01 Apr 2016 00:44:27 GMT -->
+</html>
